@@ -21,10 +21,19 @@ module.exports = async function (deployer, network, accounts) {
   const dogsUpdated = await DogsUpdated.new();
   proxy.upgrade(dogsUpdated.address);
 
-  //test
+  //fool truffle once again. it now thinks proxyDogs has all functions
+  proxyDogs = await DogsUpdated.at(proxy.address);
+  //initialize proxy state.
+  proxyDogs.initialize(accounts[0]);
+
+  //check so that storage remained
   nrOfDogs = await proxyDogs.getNumberOfDogs();
   console.log("After update: " + nrOfDogs.toNumber());
 
   //set the number of dogs through the proxy with new func contract
   await proxyDogs.setNumberOfDogs(30);
+
+  //check so that setNumberOfDogs worked with new func contract.
+  nrOfDogs = await proxyDogs.getNumberOfDogs();
+  console.log("After change: " + nrOfDogs.toNumber());
 };

@@ -72,7 +72,7 @@
   "bytecode": "0x608060405234801561001057600080fd5b5033600560006101000a81548173ffffffffffffffffffffffffffffffffffffffff021916908373ffffffffffffffffffffffffffffffffffffffff160217905550610202806100616000396000f3fe608060405234801561001057600080fd5b506004361061004c5760003560e01c806314861b22146100515780631680a5ed1461007f5780633072cf601461009d5780638da5cb5b146100bf575b600080fd5b61007d6004803603602081101561006757600080fd5b8101908080359060200190929190505050610109565b005b61008761014f565b6040518082815260200191505060405180910390f35b6100a5610194565b604051808215151515815260200191505060405180910390f35b6100c76101a7565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b80600060405180807f446f677300000000000000000000000000000000000000000000000000000000815250600401905090815260200160405180910390208190555050565b60008060405180807f446f6773000000000000000000000000000000000000000000000000000000008152506004019050908152602001604051809103902054905090565b600560149054906101000a900460ff1681565b600560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff168156fea265627a7a72315820108cd074e62b1131301832b7997a7ef02ae3c3c466fcdef8b2f85d830c43691c64736f6c63430005100032",
   "deployedBytecode": "0x608060405234801561001057600080fd5b506004361061004c5760003560e01c806314861b22146100515780631680a5ed1461007f5780633072cf601461009d5780638da5cb5b146100bf575b600080fd5b61007d6004803603602081101561006757600080fd5b8101908080359060200190929190505050610109565b005b61008761014f565b6040518082815260200191505060405180910390f35b6100a5610194565b604051808215151515815260200191505060405180910390f35b6100c76101a7565b604051808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16815260200191505060405180910390f35b80600060405180807f446f677300000000000000000000000000000000000000000000000000000000815250600401905090815260200160405180910390208190555050565b60008060405180807f446f6773000000000000000000000000000000000000000000000000000000008152506004019050908152602001604051809103902054905090565b600560149054906101000a900460ff1681565b600560009054906101000a900473ffffffffffffffffffffffffffffffffffffffff168156fea265627a7a72315820108cd074e62b1131301832b7997a7ef02ae3c3c466fcdef8b2f85d830c43691c64736f6c63430005100032",
   "sourceMap": "91:377:0:-;;;205:56;8:9:-1;5:2;;;30:1;27;20:12;5:2;205:56:0;244:10;236:5;;:18;;;;;;;;;;;;;;;;;;91:377;;;;;;",
-  "deployedSourceMap": "91:377:0:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;91:377:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;373:92;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;373:92:0;;;;;;;;;;;;;;;;;:::i;:::-;;267:100;;;:::i;:::-;;;;;;;;;;;;;;;;;;;400:24:2;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;373:20;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;:92:0;453:5;430:12;:20;;;;;;;;;;;;;;;;;;;;;;;;:28;;;;373:92;:::o;267:100::-;314:7;340:12;:20;;;;;;;;;;;;;;;;;;;;;;;;;333:27;;267:100;:::o;400:24:2:-;;;;;;;;;;;;;:::o;373:20::-;;;;;;;;;;;;;:::o",
+  "deployedSourceMap": "91:377:0:-;;;;8:9:-1;5:2;;;30:1;27;20:12;5:2;91:377:0;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;373:92;;;;;;13:2:-1;8:3;5:11;2:2;;;29:1;26;19:12;2:2;373:92:0;;;;;;;;;;;;;;;;;:::i;:::-;;267:100;;;:::i;:::-;;;;;;;;;;;;;;;;;;;400:24:4;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;373:20;;;:::i;:::-;;;;;;;;;;;;;;;;;;;;;;;:92:0;453:5;430:12;:20;;;;;;;;;;;;;;;;;;;;;;;;:28;;;;373:92;:::o;267:100::-;314:7;340:12;:20;;;;;;;;;;;;;;;;;;;;;;;;;333:27;;267:100;:::o;400:24:4:-;;;;;;;;;;;;;:::o;373:20::-;;;;;;;;;;;;;:::o",
   "source": "// SPDX-License-Identifier: MIT\npragma solidity >=0.4.22 <0.9.0;\n\nimport \"./Storage.sol\";\n\ncontract Dogs is Storage {\n\n    modifier onlyUser() {\n        require(msg.sender == owner);\n        _;\n    }\n\n    constructor() public {\n        owner = msg.sender;\n    }\n\n    function getNumberOfDogs() public view returns(uint256) {\n        return _uintStorage[\"Dogs\"];\n    }\n\n    function setNumberOfDogs(uint256 toSet) public {\n        _uintStorage[\"Dogs\"] = toSet;\n    }\n\n}\n",
   "sourcePath": "/Users/aoikurokawa/Documents/Blockchain/Ethereum/UpgrageExample/proxyContract/contracts/Dogs.sol",
   "ast": {
@@ -105,7 +105,7 @@
         "id": 2,
         "nodeType": "ImportDirective",
         "scope": 48,
-        "sourceUnit": 108,
+        "sourceUnit": 227,
         "src": "66:23:0",
         "symbolAliases": [],
         "unitAlias": ""
@@ -119,10 +119,10 @@
               "id": 3,
               "name": "Storage",
               "nodeType": "UserDefinedTypeName",
-              "referencedDeclaration": 107,
+              "referencedDeclaration": 226,
               "src": "108:7:0",
               "typeDescriptions": {
-                "typeIdentifier": "t_contract$_Storage_$107",
+                "typeIdentifier": "t_contract$_Storage_$226",
                 "typeString": "contract Storage"
               }
             },
@@ -132,7 +132,7 @@
           }
         ],
         "contractDependencies": [
-          107
+          226
         ],
         "contractKind": "contract",
         "documentation": null,
@@ -140,7 +140,7 @@
         "id": 47,
         "linearizedBaseContracts": [
           47,
-          107
+          226
         ],
         "name": "Dogs",
         "nodeType": "ContractDefinition",
@@ -174,7 +174,7 @@
                             "name": "msg",
                             "nodeType": "Identifier",
                             "overloadedDeclarations": [],
-                            "referencedDeclaration": 122,
+                            "referencedDeclaration": 241,
                             "src": "161:3:0",
                             "typeDescriptions": {
                               "typeIdentifier": "t_magic_message",
@@ -203,7 +203,7 @@
                           "name": "owner",
                           "nodeType": "Identifier",
                           "overloadedDeclarations": [],
-                          "referencedDeclaration": 104,
+                          "referencedDeclaration": 223,
                           "src": "175:5:0",
                           "typeDescriptions": {
                             "typeIdentifier": "t_address",
@@ -228,10 +228,10 @@
                       "name": "require",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [
-                        125,
-                        126
+                        244,
+                        245
                       ],
-                      "referencedDeclaration": 125,
+                      "referencedDeclaration": 244,
                       "src": "153:7:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_function_require_pure$_t_bool_$returns$__$",
@@ -296,7 +296,7 @@
                       "name": "owner",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 104,
+                      "referencedDeclaration": 223,
                       "src": "236:5:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_address",
@@ -313,7 +313,7 @@
                         "name": "msg",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 122,
+                        "referencedDeclaration": 241,
                         "src": "244:3:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_magic_message",
@@ -386,7 +386,7 @@
                       "name": "_uintStorage",
                       "nodeType": "Identifier",
                       "overloadedDeclarations": [],
-                      "referencedDeclaration": 86,
+                      "referencedDeclaration": 205,
                       "src": "340:12:0",
                       "typeDescriptions": {
                         "typeIdentifier": "t_mapping$_t_string_memory_$_t_uint256_$",
@@ -504,7 +504,7 @@
                         "name": "_uintStorage",
                         "nodeType": "Identifier",
                         "overloadedDeclarations": [],
-                        "referencedDeclaration": 86,
+                        "referencedDeclaration": 205,
                         "src": "430:12:0",
                         "typeDescriptions": {
                           "typeIdentifier": "t_mapping$_t_string_memory_$_t_uint256_$",
@@ -655,7 +655,7 @@
       },
       {
         "attributes": {
-          "SourceUnit": 108,
+          "SourceUnit": 227,
           "absolutePath": "/Users/aoikurokawa/Documents/Blockchain/Ethereum/UpgrageExample/proxyContract/contracts/Storage.sol",
           "file": "./Storage.sol",
           "scope": 48,
@@ -671,14 +671,14 @@
       {
         "attributes": {
           "contractDependencies": [
-            107
+            226
           ],
           "contractKind": "contract",
           "documentation": null,
           "fullyImplemented": true,
           "linearizedBaseContracts": [
             47,
-            107
+            226
           ],
           "name": "Dogs",
           "scope": 48
@@ -693,7 +693,7 @@
                 "attributes": {
                   "contractScope": null,
                   "name": "Storage",
-                  "referencedDeclaration": 107,
+                  "referencedDeclaration": 226,
                   "type": "contract Storage"
                 },
                 "id": 3,
@@ -751,10 +751,10 @@
                                 }
                               ],
                               "overloadedDeclarations": [
-                                125,
-                                126
+                                244,
+                                245
                               ],
-                              "referencedDeclaration": 125,
+                              "referencedDeclaration": 244,
                               "type": "function (bool) pure",
                               "value": "require"
                             },
@@ -795,7 +795,7 @@
                                       "overloadedDeclarations": [
                                         null
                                       ],
-                                      "referencedDeclaration": 122,
+                                      "referencedDeclaration": 241,
                                       "type": "msg",
                                       "value": "msg"
                                     },
@@ -814,7 +814,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 104,
+                                  "referencedDeclaration": 223,
                                   "type": "address",
                                   "value": "owner"
                                 },
@@ -911,7 +911,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 104,
+                              "referencedDeclaration": 223,
                               "type": "address",
                               "value": "owner"
                             },
@@ -937,7 +937,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 122,
+                                  "referencedDeclaration": 241,
                                   "type": "msg",
                                   "value": "msg"
                                 },
@@ -1053,7 +1053,7 @@
                               "overloadedDeclarations": [
                                 null
                               ],
-                              "referencedDeclaration": 86,
+                              "referencedDeclaration": 205,
                               "type": "mapping(string memory => uint256)",
                               "value": "_uintStorage"
                             },
@@ -1189,7 +1189,7 @@
                                   "overloadedDeclarations": [
                                     null
                                   ],
-                                  "referencedDeclaration": 86,
+                                  "referencedDeclaration": 205,
                                   "type": "mapping(string memory => uint256)",
                                   "value": "_uintStorage"
                                 },
@@ -1269,7 +1269,7 @@
   },
   "networks": {},
   "schemaVersion": "3.3.4",
-  "updatedAt": "2021-03-05T23:10:16.430Z",
+  "updatedAt": "2021-03-05T23:39:27.764Z",
   "networkType": "ethereum",
   "devdoc": {
     "methods": {}

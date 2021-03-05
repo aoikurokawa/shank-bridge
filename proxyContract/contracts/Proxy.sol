@@ -15,6 +15,7 @@ contract Proxy is Storage {
     }
 
     //function does not have name, this fallback function
+    //delegatecall every function call
     function () external payable {
         //redirect to currentaddress, low level language
         address implementation = currentAddress;

@@ -5,7 +5,7 @@ import "./Storage.sol";
 
 contract Dogs is Storage {
 
-    modifier onlyUser() {
+    modifier onlyOwner() {
         require(msg.sender == owner);
         _;
     }
@@ -18,7 +18,7 @@ contract Dogs is Storage {
         return _uintStorage["Dogs"];
     }
 
-    function setNumberOfDogs(uint256 toSet) public {
+    function setNumberOfDogs(uint256 toSet) public onlyOwner {
         _uintStorage["Dogs"] = toSet;
     }
 

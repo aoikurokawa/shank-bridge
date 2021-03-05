@@ -1,25 +1,20 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
-import "./Storage.sol";
+import "./Dogs.sol";
 
-contract DogsUpdated is Storage {
+contract DogsUpdated is Dogs {
 
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+    //avoid replacing
 
     constructor() public {
-        owner = msg.sender;
+        initialize(msg.sender);
     }
 
-    function getNumberOfDogs() public view returns(uint256) {
-        return _uintStorage["Dogs"];
-    }
-
-    function setNumberOfDogs(uint256 toSet) public onlyOwner {
-        _uintStorage["Dogs"] = toSet;
+    function initialize(address _owner) public {
+        require(!_initialized);
+        owner = _owner;
+        _initialized = true;
     }
 
 }
