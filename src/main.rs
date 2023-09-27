@@ -1,9 +1,9 @@
-use serde::{Deserialize, Serialize, ser::SerializeStruct};
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize)]
-struct Foo {
-    a: u64,
-    b: String,
+#[derive(Serialize, Deserialize)]
+enum Foo {
+    Bar { u: u64 },
+    Baz { s: String },
 }
 
 /*
