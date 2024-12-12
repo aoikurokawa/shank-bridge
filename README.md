@@ -20,5 +20,5 @@ cargo r
 
 ## Resources
 - https://rig.rs/index.html
-
+- https://docs.anthropic.com/en/home
 

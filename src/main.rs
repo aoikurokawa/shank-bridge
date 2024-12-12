@@ -1,3 +1,5 @@
+use std::{fs::File, io::Read};
+
 use rig::{
     completion::Prompt,
     providers::anthropic::{self, CLAUDE_3_5_SONNET},
@@ -13,18 +15,20 @@ async fn main() -> anyhow::Result<()> {
     )
     .build();
 
+    let mut prompt_file = File::open(&std::env::var("PROMPT_FILE_PATH")?)?;
+    let mut contents = String::new();
+    prompt_file.read_to_string(&mut contents)?;
+
     // Create agent with a single context prompt
     let agent = client
         .agent(CLAUDE_3_5_SONNET)
-        .preamble("Be precise and concise.")
+        .preamble(&contents)
         .temperature(0.5)
         .max_tokens(8192)
         .build();
 
     // Prompt the agent and print the response
-    let response = agent
-        .prompt("When and where and what type is the next solar eclipse?")
-        .await?;
+    let response = agent.prompt("What is a NCN?").await?;
     println!("{}", response);
 
     Ok(())
