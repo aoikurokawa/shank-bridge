@@ -7,6 +7,25 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.94"
+axum = { version = "0.7.9", features = ["ws"] }
+axum-extra = { version = "0.9.6", features = ["typed-header"] }
 dotenv = "0.15.0"
+futures = "0.3.31"
+futures-util = { version = "0.3.31", default-features = false, features = ["sink", "std"] }
+headers = "0.4.0"
 rig-core = "0.5.0"
+serde = { version = "1.0.216", features = ["derive"] }
 tokio = { version = "1.42.0", features = ["full"] }
+tokio-tungstenite = "0.24.0"
+
+[[bin]]
+name = "server"
+path = "src/bin/main.rs"
+
+[[bin]]
+name = "client"
+path = "src/bin/client.rs"
+
+[[bin]]
+name = "chat"
+path = "src/bin/chat.rs"
