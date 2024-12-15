@@ -43,7 +43,7 @@ async fn main() {
         .route("/websocket", get(websocket_handler))
         .with_state(app_state);
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000")
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:8080")
         .await
         .unwrap();
     axum::serve(listener, app).await.unwrap();
@@ -66,32 +66,34 @@ async fn websocket(stream: WebSocket, state: Arc<AppState>) {
     // Username gets set in the receive loop, if it's valid.
     let mut username = String::new();
     // Loop until a text message is found.
-    while let Some(Ok(message)) = receiver.next().await {
-        if let Message::Text(name) = message {
-            // If username that is sent by client is not taken, fill username string.
-            check_username(&state, &mut username, &name);
+    // while let Some(Ok(message)) = receiver.next().await {
+    //     if let Message::Text(name) = message {
+    //         // If username that is sent by client is not taken, fill username string.
+    //         check_username(&state, &mut username, &name);
 
-            // If not empty we want to quit the loop else we want to quit function.
-            if !username.is_empty() {
-                break;
-            } else {
-                // Only send our client that username is taken.
-                let _ = sender
-                    .send(Message::Text(String::from("Username already taken.")))
-                    .await;
+    //         // If not empty we want to quit the loop else we want to quit function.
+    //         if !username.is_empty() {
+    //             break;
+    //         } else {
+    //             // Only send our client that username is taken.
+    //             let _ = sender
+    //                 .send(Message::Text(String::from("Username already taken.")))
+    //                 .await;
 
-                return;
-            }
-        }
-    }
+    //             return;
+    //         }
+    //     }
+    // }
 
     // We subscribe *before* sending the "joined" message, so that we will also
     // display it to our client.
     let mut rx = state.tx.subscribe();
 
     // Now send the "joined" message to all subscribers.
-    let msg = format!("{username} joined.");
-    let _ = state.tx.send(msg);
+    // let msg = format!("{username} joined.");
+    // let _ = state.tx.send(msg);
+    // let done_msg = format!("[DONE]");
+    // let _ = state.tx.send(done_msg);
 
     // Spawn the first task that will receive broadcast messages and send text
     // messages over the websocket to our client.
@@ -114,6 +116,8 @@ async fn websocket(stream: WebSocket, state: Arc<AppState>) {
         while let Some(Ok(Message::Text(text))) = receiver.next().await {
             // Add username before message.
             let _ = tx.send(format!("{name}: {text}"));
+            let done_msg = format!("[DONE]");
+            let _ = tx.send(done_msg);
         }
     });
 
