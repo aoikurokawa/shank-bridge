@@ -102,8 +102,8 @@ async fn main() -> anyhow::Result<()> {
 }
 
 // Include utf-8 file at **compile** time.
-async fn index() -> Html<&'static str> {
-    Html(std::include_str!("../..//chat.html"))
+async fn index() -> String {
+    String::from("Hello, World!")
 }
 
 async fn prompt(
