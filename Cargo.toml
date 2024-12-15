@@ -15,8 +15,12 @@ futures-util = { version = "0.3.31", default-features = false, features = ["sink
 headers = "0.4.0"
 rig-core = "0.5.0"
 serde = { version = "1.0.216", features = ["derive"] }
+serde_json = "1.0.133"
 tokio = { version = "1.42.0", features = ["full"] }
 tokio-tungstenite = "0.24.0"
+tower-http = { version = "0.6.2", features = ["fs", "trace"] }
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 
 [[bin]]
 name = "server"
@@ -29,3 +33,7 @@ path = "src/bin/client.rs"
 [[bin]]
 name = "chat"
 path = "src/bin/chat.rs"
+
+[lib]
+name = "ncn_portal"
+paht = "src/lib.rs"
