@@ -1,17 +1,17 @@
 use std::{fs::File, io::Read, sync::Arc, time::Duration};
 
+use anyhow::anyhow;
 use axum::{
     body::Bytes,
     extract::State,
     http::StatusCode,
-    response::{Html, IntoResponse, Response},
+    response::{IntoResponse, Response},
     routing, Json, Router,
 };
-use futures::{SinkExt, StreamExt};
 use ncn_portal::MessageRequest;
 use rig::{
     agent::Agent,
-    completion::Prompt,
+    completion::Completion,
     providers::anthropic::{self, completion::CompletionModel, CLAUDE_3_5_SONNET},
 };
 use tower_http::trace::TraceLayer;
@@ -108,11 +108,22 @@ async fn index() -> String {
 
 async fn prompt(
     State(state): State<Arc<AppState>>,
-    Json(message): Json<MessageRequest>,
+    Json(msg): Json<MessageRequest>,
 ) -> Result<impl IntoResponse, AppError> {
-    println!("{message:?}");
     // Prompt the agent and print the response
-    // let response = state.agent.prompt("What is a NCN?").await?;
+    let builder = state
+        .agent
+        .completion(msg.prompt(), msg.chat_history().to_vec())
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to build: {}", e);
+            anyhow!("Failed to build: {}", e)
+        })?;
 
-    Ok(Json("Hello"))
+    let completion_res = builder.send().await.map_err(|e| {
+        tracing::error!("Failed to build: {}", e);
+        anyhow!("Failed to send: {}", e)
+    })?;
+
+    Ok(Json(completion_res.raw_response.content))
 }

@@ -15,7 +15,13 @@ cargo b
 ### Run
 
 ```bash
-cargo r
+cargo r --bin server
+```
+
+## Endpoints
+
+```bash
+curl http://localhost:8080/prompt
 ```
 
 ## Resources
