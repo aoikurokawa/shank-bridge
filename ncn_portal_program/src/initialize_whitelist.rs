@@ -39,7 +39,7 @@ pub fn process_initialize_whitelist(
         program_id,
         &Rent::get()?,
         8_u64
-            .checked_add(size_of::<Whitelist>() as u64)
+            .checked_add(std::mem::size_of::<Whitelist>() as u64)
             .ok_or(NcnPortalError::ArithmeticOverflow)?,
         &whitelist_seeds,
     )?;
