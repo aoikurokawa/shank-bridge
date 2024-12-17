@@ -5,6 +5,10 @@ use thiserror::Error;
 pub enum NcnPortalError {
     #[error("NcnPortalWhitelistAdminInvalid")]
     NcnPortalWhitelistAdminInvalid,
+    #[error("NcnPortalParentInvalid")]
+    NcnPortalParentInvalid,
+    #[error("NcnPortalWhitelistedInvalid")]
+    NcnPortalWhitelistedInvalid,
 
     #[error("ArithmeticOverflow")]
     ArithmeticOverflow = 3000,

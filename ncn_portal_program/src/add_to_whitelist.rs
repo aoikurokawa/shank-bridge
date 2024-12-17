@@ -21,7 +21,7 @@ pub fn process_add_to_whitelist(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    Whitelist::load(program_id, admin_info.key, whitelist_info, true)?;
+    Whitelist::load(program_id, whitelist_info, true)?;
     let whitelist_data = whitelist_info.data.borrow();
     let whitelist = Whitelist::try_from_slice_unchecked(&whitelist_data)?;
 

@@ -24,7 +24,7 @@ pub fn process_initialize_whitelist(
 
     // The whitelist account shall be at the canonical PDA
     let (whitelist_pubkey, whitelist_bump, mut whitelist_seeds) =
-        Whitelist::find_program_address(program_id, admin.key);
+        Whitelist::find_program_address(program_id);
     whitelist_seeds.push(vec![whitelist_bump]);
     if whitelist_pubkey.ne(whitelist.key) {
         msg!("Whitelist account is not at the correct PDA");

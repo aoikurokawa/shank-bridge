@@ -31,12 +31,12 @@ impl Whitelist {
         }
     }
 
-    pub fn seeds(admin: &Pubkey) -> Vec<Vec<u8>> {
-        vec![b"whitelist".to_vec(), admin.to_bytes().to_vec()]
+    pub fn seeds() -> Vec<Vec<u8>> {
+        vec![b"whitelist".to_vec()]
     }
 
-    pub fn find_program_address(program_id: &Pubkey, admin: &Pubkey) -> (Pubkey, u8, Vec<Vec<u8>>) {
-        let seeds = Self::seeds(admin);
+    pub fn find_program_address(program_id: &Pubkey) -> (Pubkey, u8, Vec<Vec<u8>>) {
+        let seeds = Self::seeds();
         let (address, bump) = Pubkey::find_program_address(
             &seeds.iter().map(|s| s.as_slice()).collect::<Vec<_>>(),
             program_id,
@@ -46,7 +46,6 @@ impl Whitelist {
 
     pub fn load(
         program_id: &Pubkey,
-        admin: &Pubkey,
         whitelist_account: &AccountInfo,
         expect_writable: bool,
     ) -> Result<(), ProgramError> {
@@ -68,7 +67,7 @@ impl Whitelist {
         }
         if whitelist_account
             .key
-            .ne(&Self::find_program_address(program_id, admin).0)
+            .ne(&Self::find_program_address(program_id).0)
         {
             msg!("Whitelist account is not at the correct PDA");
             return Err(ProgramError::InvalidAccountData);

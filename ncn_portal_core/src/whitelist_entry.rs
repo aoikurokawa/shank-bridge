@@ -1,5 +1,6 @@
 use bytemuck::{Pod, Zeroable};
 use jito_bytemuck::{types::PodU64, AccountDeserialize, Discriminator};
+use ncn_portal_sdk::error::NcnPortalError;
 use shank::ShankAccount;
 use solana_program::{account_info::AccountInfo, msg, program_error::ProgramError, pubkey::Pubkey};
 
@@ -33,6 +34,22 @@ impl WhitelistEntry {
             parent,
             whitelisted,
             rate_limiting: PodU64::from(rate_limiting),
+        }
+    }
+
+    pub fn check_parent(&self, parent_info: &Pubkey) -> Result<(), NcnPortalError> {
+        if self.parent.eq(parent_info) {
+            Ok(())
+        } else {
+            Err(NcnPortalError::NcnPortalParentInvalid)
+        }
+    }
+
+    pub fn check_whitelisted(&self, whitelisted_info: &Pubkey) -> Result<(), NcnPortalError> {
+        if self.whitelisted.eq(whitelisted_info) {
+            Ok(())
+        } else {
+            Err(NcnPortalError::NcnPortalWhitelistedInvalid)
         }
     }
 

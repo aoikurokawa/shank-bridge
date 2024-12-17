@@ -1,11 +1,15 @@
 mod add_to_whitelist;
+mod check_whitelisted;
 mod initialize_whitelist;
+mod remove_from_whitelist;
 
 use add_to_whitelist::process_add_to_whitelist;
 use borsh::BorshDeserialize;
+use check_whitelisted::process_check_whitelisted;
 use const_str_to_pubkey::str_to_pubkey;
 use initialize_whitelist::process_initialize_whitelist;
 use ncn_portal_sdk::instruction::NcnPortalInstruction;
+use remove_from_whitelist::process_remove_from_whitelist;
 use solana_program::{
     account_info::AccountInfo, declare_id, entrypoint::ProgramResult, msg,
     program_error::ProgramError, pubkey::Pubkey,
@@ -37,10 +41,12 @@ pub fn process_instruction(
             process_add_to_whitelist(program_id, accounts, rate_limiting)
         }
         NcnPortalInstruction::CheckWhitelisted => {
-            todo!()
+            msg!("Instruction: CheckWhitelisted");
+            process_check_whitelisted(program_id, accounts)
         }
         NcnPortalInstruction::RemoveFromWhitelist => {
-            todo!()
+            msg!("Instruction: RemoveFromWhitelist");
+            process_remove_from_whitelist(program_id, accounts)
         }
         NcnPortalInstruction::SetRateLimiting { rate_limiting } => todo!(),
     }
