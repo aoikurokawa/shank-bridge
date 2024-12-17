@@ -21,7 +21,7 @@ pub fn process_add_to_whitelist(
         return Err(ProgramError::NotEnoughAccountKeys);
     };
 
-    Whitelist::load(program_id, whitelist_info, true)?;
+    Whitelist::load(program_id, whitelist_info, false)?;
     let whitelist_data = whitelist_info.data.borrow();
     let whitelist = Whitelist::try_from_slice_unchecked(&whitelist_data)?;
 
@@ -51,13 +51,13 @@ pub fn process_add_to_whitelist(
         program_id,
         &Rent::get()?,
         8_u64
-            .checked_add(size_of::<WhitelistEntry>() as u64)
+            .checked_add(std::mem::size_of::<WhitelistEntry>() as u64)
             .ok_or(NcnPortalError::ArithmeticOverflow)?,
         &whitelist_entry_seeds,
     )?;
 
     let mut whitelist_entry_data = whitelist_entry_info.try_borrow_mut_data()?;
-    whitelist_entry_data[0] = Whitelist::DISCRIMINATOR;
+    whitelist_entry_data[0] = WhitelistEntry::DISCRIMINATOR;
     let whitelist_entry = WhitelistEntry::try_from_slice_unchecked_mut(&mut whitelist_entry_data)?;
     *whitelist_entry =
         WhitelistEntry::new(*whitelist_info.key, *whitelisted_info.key, rate_limiting);

@@ -24,6 +24,14 @@ cargo r --bin server
 curl http://localhost:8080/prompt
 ```
 
+## Whitelist Program
+
+### Test
+
+```bash
+cargo-build-sbf && SBF_OUT_DIR=$(pwd)/target/sbf-solana-solana/release cargo nextest run --all-features
+```
+
 ## Resources
 - https://rig.rs/index.html
 - https://docs.anthropic.com/en/home
