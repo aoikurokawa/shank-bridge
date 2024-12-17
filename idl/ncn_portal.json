@@ -1,0 +1,233 @@
+{
+  "version": "0.1.0",
+  "name": "ncn_portal",
+  "instructions": [
+    {
+      "name": "InitializeWhitelist",
+      "accounts": [
+        {
+          "name": "whitelist",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 0
+      }
+    },
+    {
+      "name": "AddToWhitelist",
+      "accounts": [
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "whitelistEntry",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelisted",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "rateLimiting",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
+      }
+    },
+    {
+      "name": "CheckWhitelisted",
+      "accounts": [
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "whitelistEntry",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "whitelisted",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 2
+      }
+    },
+    {
+      "name": "RemoveFromWhitelist",
+      "accounts": [
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "whitelistEntry",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "whitelistedInfo",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "adminInfo",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [],
+      "discriminant": {
+        "type": "u8",
+        "value": 3
+      }
+    },
+    {
+      "name": "SetRateLimiting",
+      "accounts": [
+        {
+          "name": "whitelist",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "whitelistEntry",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "rateLimiting",
+          "type": "u64"
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 4
+      }
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Whitelist",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WhitelistEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "parent",
+            "type": "publicKey"
+          },
+          {
+            "name": "whitelisted",
+            "type": "publicKey"
+          },
+          {
+            "name": "rateLimiting",
+            "type": {
+              "defined": "PodU64"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 0,
+      "name": "NcnPortalWhitelistAdminInvalid",
+      "msg": "NcnPortalWhitelistAdminInvalid"
+    },
+    {
+      "code": 1,
+      "name": "NcnPortalParentInvalid",
+      "msg": "NcnPortalParentInvalid"
+    },
+    {
+      "code": 2,
+      "name": "NcnPortalWhitelistedInvalid",
+      "msg": "NcnPortalWhitelistedInvalid"
+    },
+    {
+      "code": 3000,
+      "name": "ArithmeticOverflow",
+      "msg": "ArithmeticOverflow"
+    },
+    {
+      "code": 3001,
+      "name": "ArithmeticUnderflow",
+      "msg": "ArithmeticUnderflow"
+    },
+    {
+      "code": 3002,
+      "name": "DivisionByZero",
+      "msg": "DivisionByZero"
+    }
+  ],
+  "metadata": {
+    "origin": "shank",
+    "address": "RestkWeAVL8fRGgzhfeoqFhsqKRchg6aa1XrcH96z4Q"
+  }
+}
