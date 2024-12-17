@@ -143,5 +143,5 @@ fn check_username(state: &AppState, string: &mut String, name: &str) {
 
 // Include utf-8 file at **compile** time.
 async fn index() -> Html<&'static str> {
-    Html(std::include_str!("../..//chat.html"))
+    Html(std::include_str!("../../../chat.html"))
 }

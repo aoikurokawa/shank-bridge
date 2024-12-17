@@ -1,39 +1,38 @@
-[package]
-name = "ncn-portal"
-version = "0.0.1"
-edition = "2021"
+[workspace]
+members = [
+	"engine",
+	"ncn_portal_core",
+	"ncn_portal_program",
+	"ncn_portal_sdk",
+]
+resolver = "2"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
-[dependencies]
+[workspace.dependencies]
 anyhow = "1.0.94"
 axum = { version = "0.7.9", features = ["ws"] }
 axum-extra = { version = "0.9.6", features = ["typed-header"] }
+borsh = { version = "0.10.3" }
+bytemuck = { version = "1.16.3", features = ["min_const_generics"] }
+const_str_to_pubkey = "0.1.1"
 dotenv = "0.15.0"
 futures = "0.3.31"
 futures-util = { version = "0.3.31", default-features = false, features = ["sink", "std"] }
 headers = "0.4.0"
+jito-account-traits-derive = { git = "https://github.com/jito-foundation/restaking.git", rev = "eaf88e7e5ca2845fe3108c4fc4a06a25f9a8514d" }
+jito-bytemuck = { git = "https://github.com/jito-foundation/restaking.git", rev = "eaf88e7e5ca2845fe3108c4fc4a06a25f9a8514d" }
+jito-jsm-core = { git = "https://github.com/jito-foundation/restaking.git", rev = "eaf88e7e5ca2845fe3108c4fc4a06a25f9a8514d" }
+ncn-portal-core = { path = "ncn_portal_core", version = "0.1.0" }
+ncn-portal-sdk = { path = "ncn_portal_sdk", version = "0.1.0" }
 rig-core = "0.5.0"
 serde = { version = "1.0.216", features = ["derive"] }
 serde_json = "1.0.133"
+shank = "0.4.2"
+shank_idl = "0.4.2"
+solana-program = "~1.18"
+thiserror = "1.0.57"
 tokio = { version = "1.42.0", features = ["full"] }
 tokio-tungstenite = "0.24.0"
 tower-http = { version = "0.6.2", features = ["fs", "trace"] }
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 
-[[bin]]
-name = "server"
-path = "src/bin/main.rs"
-
-[[bin]]
-name = "client"
-path = "src/bin/client.rs"
-
-[[bin]]
-name = "chat"
-path = "src/bin/chat.rs"
-
-[lib]
-name = "ncn_portal"
-paht = "src/lib.rs"
