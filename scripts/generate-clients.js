@@ -1,7 +1,7 @@
-const kinobi = require("kinobi");
-const anchorIdl = require("@kinobi-so/nodes-from-anchor");
+const kinobi = require("codama");
+const anchorIdl = require("@codama/nodes-from-anchor");
 const path = require("path");
-const renderers = require('@kinobi-so/renderers');
+const renderers = require('@codama/renderers');
 
 // Paths.
 const projectRoot = path.join(__dirname, "..");
@@ -18,31 +18,21 @@ const restakingRootNode = anchorIdl.rootNodeFromAnchor(require(path.join(idlDir,
 const restakingKinobi = kinobi.createFromRoot(restakingRootNode);
 restakingKinobi.update(kinobi.bottomUpTransformerVisitor([
     {
-        // PodU128 -> u128
-        select: (node) => {
-            return (
-                kinobi.isNode(node, "structFieldTypeNode") &&
-                node.type.name === "podU128"
-            );
-        },
-        transform: (node) => {
-            kinobi.assertIsNode(node, "structFieldTypeNode");
-            return {
-                ...node,
-                type: kinobi.numberTypeNode("u128"),
-            };
-        },
-    },
-    {
         // PodU64 -> u64
-        select: (node) => {
-            return (
-                kinobi.isNode(node, "structFieldTypeNode") &&
-                node.type.name === "podU64"
-            );
+        select: (nodes) => {
+            for (let i = 0; i < nodes.length; i++) {
+                if (
+                    kinobi.isNode(nodes[i], "structFieldTypeNode") &&
+                    nodes[i].type.name === "podU64"
+                ) {
+                    return true;
+                };
+            }
+
+            return false;
         },
         transform: (node) => {
-            kinobi.assertIsNode(node, "structFieldTypeNode");
+            kinobi.assertIsNode(node, ["structFieldTypeNode", "definedTypeLinkNode"]);
             return {
                 ...node,
                 type: kinobi.numberTypeNode("u64"),
@@ -51,14 +41,20 @@ restakingKinobi.update(kinobi.bottomUpTransformerVisitor([
     },
     {
         // PodU32 -> u32
-        select: (node) => {
-            return (
-                kinobi.isNode(node, "structFieldTypeNode") &&
-                node.type.name === "podU32"
-            );
+        select: (nodes) => {
+            for (let i = 0; i < nodes.length; i++) {
+                if (
+                    kinobi.isNode(nodes[i], "structFieldTypeNode") &&
+                    nodes[i].type.name === "podU32"
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
         },
         transform: (node) => {
-            kinobi.assertIsNode(node, "structFieldTypeNode");
+            kinobi.assertIsNode(node, ["structFieldTypeNode", "definedTypeLinkNode"]);
             return {
                 ...node,
                 type: kinobi.numberTypeNode("u32"),
@@ -67,14 +63,20 @@ restakingKinobi.update(kinobi.bottomUpTransformerVisitor([
     },
     {
         // PodU16 -> u16
-        select: (node) => {
-            return (
-                kinobi.isNode(node, "structFieldTypeNode") &&
-                node.type.name === "podU16"
-            );
+        select: (nodes) => {
+            for (let i = 0; i < nodes.length; i++) {
+                if (
+                    kinobi.isNode(nodes[i], "structFieldTypeNode") &&
+                    nodes[i].type.name === "podU16"
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
         },
         transform: (node) => {
-            kinobi.assertIsNode(node, "structFieldTypeNode");
+            kinobi.assertIsNode(node, ["structFieldTypeNode", "definedTypeLinkNode"]);
             return {
                 ...node,
                 type: kinobi.numberTypeNode("u16"),
@@ -83,14 +85,9 @@ restakingKinobi.update(kinobi.bottomUpTransformerVisitor([
     },
     // add 8 byte discriminator to accountNode
     {
-        select: (node) => {
-            return (
-                kinobi.isNode(node, "accountNode")
-            );
-        },
+        select: '[accountNode]',
         transform: (node) => {
             kinobi.assertIsNode(node, "accountNode");
-
             return {
                 ...node,
                 data: {
