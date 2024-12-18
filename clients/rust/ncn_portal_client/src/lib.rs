@@ -1,14 +1,25 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
+#![allow(clippy::all)]
+#![allow(clippy::nursery)]
+#![allow(clippy::integer_division)]
+#![allow(clippy::arithmetic_side_effects)]
+#![allow(clippy::style)]
+#![allow(clippy::perf)]
+mod generated;
+
+use generated::*;
+
+pub mod accounts {
+    pub use super::generated::accounts::*;
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+pub mod instructions {
+    pub use super::generated::instructions::*;
+}
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+pub mod errors {
+    pub use super::generated::errors::*;
+}
+
+pub mod programs {
+    pub use super::generated::programs::*;
 }

@@ -5,9 +5,8 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
-  pub(crate) mod r#whitelist;
-  pub(crate) mod r#whitelist_entry;
+pub(crate) mod r#whitelist;
+pub(crate) mod r#whitelist_entry;
 
-  pub use self::r#whitelist::*;
-  pub use self::r#whitelist_entry::*;
-
+pub use self::r#whitelist::*;
+pub use self::r#whitelist_entry::*;

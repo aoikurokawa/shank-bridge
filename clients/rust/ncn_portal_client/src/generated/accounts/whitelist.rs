@@ -5,45 +5,46 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
-use solana_program::pubkey::Pubkey;
-use borsh::BorshSerialize;
 use borsh::BorshDeserialize;
-
+use borsh::BorshSerialize;
+use solana_program::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Whitelist {
-pub discriminator: u64,
-#[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::DisplayFromStr>"))]
-pub admin: Pubkey,
+    pub discriminator: u64,
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
+    pub admin: Pubkey,
 }
 
-
 impl Whitelist {
-      pub const LEN: usize = 32;
-  
-  
-  
-  #[inline(always)]
-  pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
-    let mut data = data;
-    Self::deserialize(&mut data)
-  }
+    pub const LEN: usize = 32;
+
+    #[inline(always)]
+    pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
+        let mut data = data;
+        Self::deserialize(&mut data)
+    }
 }
 
 impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for Whitelist {
-  type Error = std::io::Error;
+    type Error = std::io::Error;
 
-  fn try_from(account_info: &solana_program::account_info::AccountInfo<'a>) -> Result<Self, Self::Error> {
-      let mut data: &[u8] = &(*account_info.data).borrow();
-      Self::deserialize(&mut data)
-  }
+    fn try_from(
+        account_info: &solana_program::account_info::AccountInfo<'a>,
+    ) -> Result<Self, Self::Error> {
+        let mut data: &[u8] = &(*account_info.data).borrow();
+        Self::deserialize(&mut data)
+    }
 }
 
 #[cfg(feature = "anchor")]
 impl anchor_lang::AccountDeserialize for Whitelist {
     fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
-      Ok(Self::deserialize(buf)?)
+        Ok(Self::deserialize(buf)?)
     }
 }
 
@@ -53,16 +54,14 @@ impl anchor_lang::AccountSerialize for Whitelist {}
 #[cfg(feature = "anchor")]
 impl anchor_lang::Owner for Whitelist {
     fn owner() -> Pubkey {
-      crate::NCN_PORTAL_ID
+        crate::NCN_PORTAL_ID
     }
 }
 
 #[cfg(feature = "anchor-idl-build")]
 impl anchor_lang::IdlBuild for Whitelist {}
 
-
 #[cfg(feature = "anchor-idl-build")]
 impl anchor_lang::Discriminator for Whitelist {
-  const DISCRIMINATOR: [u8; 8] = [0; 8];
+    const DISCRIMINATOR: [u8; 8] = [0; 8];
 }
-

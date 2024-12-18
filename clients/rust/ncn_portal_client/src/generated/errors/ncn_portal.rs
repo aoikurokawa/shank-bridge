@@ -35,4 +35,3 @@ impl solana_program::program_error::PrintProgramError for NcnPortalError {
         solana_program::msg!(&self.to_string());
     }
 }
-

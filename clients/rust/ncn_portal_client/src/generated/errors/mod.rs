@@ -5,7 +5,6 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
-      pub(crate) mod ncn_portal;
-  
-      pub use self::ncn_portal::NcnPortalError;
-  
+pub(crate) mod ncn_portal;
+
+pub use self::ncn_portal::NcnPortalError;

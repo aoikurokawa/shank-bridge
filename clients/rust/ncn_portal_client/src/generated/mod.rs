@@ -5,9 +5,9 @@
 //! <https://github.com/kinobi-so/kinobi>
 //!
 
-      pub mod accounts;
-        pub mod errors;
-        pub mod instructions;
-        pub mod programs;
-    
-  pub(crate) use programs::*;
+pub mod accounts;
+pub mod errors;
+pub mod instructions;
+pub mod programs;
+
+pub(crate) use programs::*;

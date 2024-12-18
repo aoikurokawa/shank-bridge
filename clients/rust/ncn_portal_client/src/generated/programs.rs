@@ -7,7 +7,5 @@
 
 use solana_program::{pubkey, pubkey::Pubkey};
 
-
-  /// `ncn_portal` program ID.
-  pub const NCN_PORTAL_ID: Pubkey = pubkey!("RestkWeAVL8fRGgzhfeoqFhsqKRchg6aa1XrcH96z4Q");
-
+/// `ncn_portal` program ID.
+pub const NCN_PORTAL_ID: Pubkey = pubkey!("RestkWeAVL8fRGgzhfeoqFhsqKRchg6aa1XrcH96z4Q");
