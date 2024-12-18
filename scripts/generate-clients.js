@@ -9,9 +9,11 @@ const projectRoot = path.join(__dirname, "..");
 const idlDir = path.join(projectRoot, "idl");
 
 const rustClientsDir = path.join(__dirname, "..", "clients", "rust");
+const jsClientsDir = path.join(__dirname, "..", "clients", "js");
 
 // Generate the restaking client in Rust and JavaScript.
 const rustRestakingClientDir = path.join(rustClientsDir, "ncn_portal_client");
+const jsRestakingClientDir = path.join(jsClientsDir, "ncn_portal_client");
 const restakingRootNode = anchorIdl.rootNodeFromAnchor(require(path.join(idlDir, "ncn_portal.json")));
 const restakingKinobi = kinobi.createFromRoot(restakingRootNode);
 restakingKinobi.update(kinobi.bottomUpTransformerVisitor([
@@ -108,7 +110,7 @@ restakingKinobi.accept(renderers.renderRustVisitor(path.join(rustRestakingClient
     deleteFolderBeforeRendering: true,
     toolchain: "+nightly-2024-07-25"
 }));
-// restakingKinobi.accept(renderers.renderJavaScriptVisitor(path.join(jsRestakingClientDir), {}));
+restakingKinobi.accept(renderers.renderJavaScriptVisitor(path.join(jsRestakingClientDir), {}));
 
 // Generate the vault client in Rust and JavaScript.
 // const rustVaultClientDir = path.join(rustClientsDir, "vault_client");
