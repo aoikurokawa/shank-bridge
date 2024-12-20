@@ -21,7 +21,7 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 
 [[bin]]
-name = "server"
+name = "ncn-portal-engine"
 path = "src/bin/main.rs"
 
 [[bin]]
