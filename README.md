@@ -1,28 +1,4 @@
-# NCN Portal
-
-## Getting Started
-
-### Set Environment Variable
-
-- `ANTHROPIC_API_KEY`
-
-### Build
-
-```bash
-cargo b
-```
-
-### Run
-
-```bash
-cargo r --bin server
-```
-
-## Endpoints
-
-```bash
-curl http://localhost:8080/prompt
-```
+# Whitelist Program
 
 ## Whitelist Program
 
