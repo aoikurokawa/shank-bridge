@@ -2,7 +2,6 @@
 members = [
 	"cli", 
 	"clients/rust/ncn_portal_client",
-	"engine",
 	"integration_tests",
 	"ncn_portal_core",
 	"ncn_portal_program",
