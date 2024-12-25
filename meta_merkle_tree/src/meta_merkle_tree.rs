@@ -110,7 +110,7 @@ impl MetaMerkleTree {
 
     pub fn get_node(&self, tip_distribution_account: &Pubkey) -> TreeNode {
         for i in self.tree_nodes.iter() {
-            if i.tip_distribution_account == *tip_distribution_account {
+            if i.user_account == *tip_distribution_account {
                 return i.clone();
             }
         }
@@ -141,11 +141,7 @@ impl MetaMerkleTree {
         }
 
         // validate that there are no duplicate vote_accounts
-        let unique_nodes: HashSet<_> = self
-            .tree_nodes
-            .iter()
-            .map(|n| n.tip_distribution_account)
-            .collect();
+        let unique_nodes: HashSet<_> = self.tree_nodes.iter().map(|n| n.user_account).collect();
 
         if unique_nodes.len() != self.tree_nodes.len() {
             return Err(MerkleValidationError(
@@ -198,7 +194,7 @@ impl MetaMerkleTree {
     pub fn convert_to_hashmap(&self) -> HashMap<Pubkey, TreeNode> {
         self.tree_nodes
             .iter()
-            .map(|n| (n.tip_distribution_account, n.clone()))
+            .map(|n| (n.user_account, n.clone()))
             .collect()
     }
 }
@@ -227,7 +223,8 @@ mod tests {
 
     #[test]
     fn test_verify_new_merkle_tree() {
-        let tree_nodes = vec![TreeNode::new(&Pubkey::default(), &[0; 32], 100, 10)];
+        // let tree_nodes = vec![TreeNode::new(&Pubkey::default(), &[0; 32], 100, 10)];
+        let tree_nodes = vec![TreeNode::new(&Pubkey::default(), 10)];
         let merkle_tree = MetaMerkleTree::new(tree_nodes).unwrap();
         assert!(merkle_tree.verify_proof().is_ok(), "verify failed");
     }
@@ -238,20 +235,20 @@ mod tests {
         let tree_nodes = vec![
             TreeNode::new(
                 &new_test_key(),
-                &[0; 32],
-                100 * u64::pow(10, 9),
-                100 * u64::pow(10, 9),
-            ),
-            TreeNode::new(
-                &new_test_key(),
-                &[0; 32],
-                100 * u64::pow(10, 9),
+                // &[0; 32],
+                // 100 * u64::pow(10, 9),
                 100 * u64::pow(10, 9),
             ),
             TreeNode::new(
                 &new_test_key(),
-                &[0; 32],
+                // &[0; 32],
+                // 100 * u64::pow(10, 9),
                 100 * u64::pow(10, 9),
+            ),
+            TreeNode::new(
+                &new_test_key(),
+                // &[0; 32],
+                // 100 * u64::pow(10, 9),
                 100 * u64::pow(10, 9),
             ),
         ];
@@ -275,9 +272,12 @@ mod tests {
         let pubkey3 = Pubkey::new_unique();
 
         let mut tree_nodes = vec![
-            TreeNode::new(&pubkey1, &[0; 32], 10, 20),
-            TreeNode::new(&pubkey2, &[0; 32], 1, 2),
-            TreeNode::new(&pubkey3, &[0; 32], 3, 4),
+            // TreeNode::new(&pubkey1, &[0; 32], 10, 20),
+            // TreeNode::new(&pubkey2, &[0; 32], 1, 2),
+            // TreeNode::new(&pubkey3, &[0; 32], 3, 4),
+            TreeNode::new(&pubkey1, 20),
+            TreeNode::new(&pubkey2, 2),
+            TreeNode::new(&pubkey3, 4),
         ];
 
         // Sort by hash
@@ -287,9 +287,10 @@ mod tests {
 
         assert_eq!(tree.tree_nodes.len(), 3);
         // assert_eq!(tree.tree_nodes[0].max_total_claim, 10);
-        assert_eq!(tree.tree_nodes[0].max_num_nodes, 20);
+        // assert_eq!(tree.tree_nodes[0].max_num_nodes, 20);
         // assert_eq!(tree.tree_nodes[0].validator_merkle_root, [0; 32]);
-        assert_eq!(tree.tree_nodes[0].tip_distribution_account, pubkey1);
+        assert_eq!(tree.tree_nodes[0].user_account, pubkey1);
+        // assert!(tree.tree_nodes.contains(&TreeNode::new(&pubkey1)));
         assert!(tree.tree_nodes[0].proof.is_some());
     }
 }
