@@ -30,15 +30,30 @@ import {
   type MaybeAccount,
   type MaybeEncodedAccount,
 } from '@solana/web3.js';
+import {
+  getMerkleRootDecoder,
+  getMerkleRootEncoder,
+  type MerkleRoot,
+  type MerkleRootArgs,
+} from '../types';
 
-export type Whitelist = { discriminator: bigint; admin: Address };
+export type Whitelist = {
+  discriminator: bigint;
+  admin: Address;
+  merkleRoot: MerkleRoot;
+};
 
-export type WhitelistArgs = { discriminator: number | bigint; admin: Address };
+export type WhitelistArgs = {
+  discriminator: number | bigint;
+  admin: Address;
+  merkleRoot: MerkleRootArgs;
+};
 
 export function getWhitelistEncoder(): Encoder<WhitelistArgs> {
   return getStructEncoder([
     ['discriminator', getU64Encoder()],
     ['admin', getAddressEncoder()],
+    ['merkleRoot', getMerkleRootEncoder()],
   ]);
 }
 
@@ -46,6 +61,7 @@ export function getWhitelistDecoder(): Decoder<Whitelist> {
   return getStructDecoder([
     ['discriminator', getU64Decoder()],
     ['admin', getAddressDecoder()],
+    ['merkleRoot', getMerkleRootDecoder()],
   ]);
 }
 
@@ -107,5 +123,5 @@ export async function fetchAllMaybeWhitelist(
 }
 
 export function getWhitelistSize(): number {
-  return 32;
+  return 64;
 }

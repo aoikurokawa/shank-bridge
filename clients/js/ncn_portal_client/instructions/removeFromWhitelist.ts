@@ -30,7 +30,7 @@ import {
 import { NCN_PORTAL_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const REMOVE_FROM_WHITELIST_DISCRIMINATOR = 3;
+export const REMOVE_FROM_WHITELIST_DISCRIMINATOR = 4;
 
 export function getRemoveFromWhitelistDiscriminatorBytes() {
   return getU8Encoder().encode(REMOVE_FROM_WHITELIST_DISCRIMINATOR);

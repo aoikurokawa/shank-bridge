@@ -9,41 +9,37 @@ use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
 /// Accounts.
-pub struct SetRateLimiting {
+pub struct AdminUpdateMerkleRoot {
     pub whitelist: solana_program::pubkey::Pubkey,
-
-    pub whitelist_entry: solana_program::pubkey::Pubkey,
 
     pub admin: solana_program::pubkey::Pubkey,
 }
 
-impl SetRateLimiting {
+impl AdminUpdateMerkleRoot {
     pub fn instruction(
         &self,
-        args: SetRateLimitingInstructionArgs,
+        args: AdminUpdateMerkleRootInstructionArgs,
     ) -> solana_program::instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::vec_init_then_push)]
     pub fn instruction_with_remaining_accounts(
         &self,
-        args: SetRateLimitingInstructionArgs,
+        args: AdminUpdateMerkleRootInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.whitelist,
-            false,
-        ));
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.whitelist_entry,
+            self.whitelist,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.admin, true,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = SetRateLimitingInstructionData::new().try_to_vec().unwrap();
+        let mut data = AdminUpdateMerkleRootInstructionData::new()
+            .try_to_vec()
+            .unwrap();
         let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -56,17 +52,17 @@ impl SetRateLimiting {
 }
 
 #[derive(BorshDeserialize, BorshSerialize)]
-pub struct SetRateLimitingInstructionData {
+pub struct AdminUpdateMerkleRootInstructionData {
     discriminator: u8,
 }
 
-impl SetRateLimitingInstructionData {
+impl AdminUpdateMerkleRootInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 4 }
+        Self { discriminator: 1 }
     }
 }
 
-impl Default for SetRateLimitingInstructionData {
+impl Default for AdminUpdateMerkleRootInstructionData {
     fn default() -> Self {
         Self::new()
     }
@@ -74,27 +70,25 @@ impl Default for SetRateLimitingInstructionData {
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct SetRateLimitingInstructionArgs {
-    pub rate_limiting: u64,
+pub struct AdminUpdateMerkleRootInstructionArgs {
+    pub root: [u8; 32],
 }
 
-/// Instruction builder for `SetRateLimiting`.
+/// Instruction builder for `AdminUpdateMerkleRoot`.
 ///
 /// ### Accounts:
 ///
-///   0. `[]` whitelist
-///   1. `[writable]` whitelist_entry
-///   2. `[signer]` admin
+///   0. `[writable]` whitelist
+///   1. `[signer]` admin
 #[derive(Clone, Debug, Default)]
-pub struct SetRateLimitingBuilder {
+pub struct AdminUpdateMerkleRootBuilder {
     whitelist: Option<solana_program::pubkey::Pubkey>,
-    whitelist_entry: Option<solana_program::pubkey::Pubkey>,
     admin: Option<solana_program::pubkey::Pubkey>,
-    rate_limiting: Option<u64>,
+    root: Option<[u8; 32]>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
-impl SetRateLimitingBuilder {
+impl AdminUpdateMerkleRootBuilder {
     pub fn new() -> Self {
         Self::default()
     }
@@ -104,21 +98,13 @@ impl SetRateLimitingBuilder {
         self
     }
     #[inline(always)]
-    pub fn whitelist_entry(
-        &mut self,
-        whitelist_entry: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.whitelist_entry = Some(whitelist_entry);
-        self
-    }
-    #[inline(always)]
     pub fn admin(&mut self, admin: solana_program::pubkey::Pubkey) -> &mut Self {
         self.admin = Some(admin);
         self
     }
     #[inline(always)]
-    pub fn rate_limiting(&mut self, rate_limiting: u64) -> &mut Self {
-        self.rate_limiting = Some(rate_limiting);
+    pub fn root(&mut self, root: [u8; 32]) -> &mut Self {
+        self.root = Some(root);
         self
     }
     /// Add an additional account to the instruction.
@@ -141,55 +127,46 @@ impl SetRateLimitingBuilder {
     }
     #[allow(clippy::clone_on_copy)]
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
-        let accounts = SetRateLimiting {
+        let accounts = AdminUpdateMerkleRoot {
             whitelist: self.whitelist.expect("whitelist is not set"),
-            whitelist_entry: self.whitelist_entry.expect("whitelist_entry is not set"),
             admin: self.admin.expect("admin is not set"),
         };
-        let args = SetRateLimitingInstructionArgs {
-            rate_limiting: self
-                .rate_limiting
-                .clone()
-                .expect("rate_limiting is not set"),
+        let args = AdminUpdateMerkleRootInstructionArgs {
+            root: self.root.clone().expect("root is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
     }
 }
 
-/// `set_rate_limiting` CPI accounts.
-pub struct SetRateLimitingCpiAccounts<'a, 'b> {
+/// `admin_update_merkle_root` CPI accounts.
+pub struct AdminUpdateMerkleRootCpiAccounts<'a, 'b> {
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub whitelist_entry: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub admin: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
-/// `set_rate_limiting` CPI instruction.
-pub struct SetRateLimitingCpi<'a, 'b> {
+/// `admin_update_merkle_root` CPI instruction.
+pub struct AdminUpdateMerkleRootCpi<'a, 'b> {
     /// The program to invoke.
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub whitelist_entry: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub admin: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
-    pub __args: SetRateLimitingInstructionArgs,
+    pub __args: AdminUpdateMerkleRootInstructionArgs,
 }
 
-impl<'a, 'b> SetRateLimitingCpi<'a, 'b> {
+impl<'a, 'b> AdminUpdateMerkleRootCpi<'a, 'b> {
     pub fn new(
         program: &'b solana_program::account_info::AccountInfo<'a>,
-        accounts: SetRateLimitingCpiAccounts<'a, 'b>,
-        args: SetRateLimitingInstructionArgs,
+        accounts: AdminUpdateMerkleRootCpiAccounts<'a, 'b>,
+        args: AdminUpdateMerkleRootInstructionArgs,
     ) -> Self {
         Self {
             __program: program,
             whitelist: accounts.whitelist,
-            whitelist_entry: accounts.whitelist_entry,
             admin: accounts.admin,
             __args: args,
         }
@@ -227,13 +204,9 @@ impl<'a, 'b> SetRateLimitingCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.whitelist.key,
-            false,
-        ));
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.whitelist_entry.key,
+            *self.whitelist.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -247,7 +220,9 @@ impl<'a, 'b> SetRateLimitingCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = SetRateLimitingInstructionData::new().try_to_vec().unwrap();
+        let mut data = AdminUpdateMerkleRootInstructionData::new()
+            .try_to_vec()
+            .unwrap();
         let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
@@ -256,10 +231,9 @@ impl<'a, 'b> SetRateLimitingCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.whitelist.clone());
-        account_infos.push(self.whitelist_entry.clone());
         account_infos.push(self.admin.clone());
         remaining_accounts
             .iter()
@@ -273,26 +247,24 @@ impl<'a, 'b> SetRateLimitingCpi<'a, 'b> {
     }
 }
 
-/// Instruction builder for `SetRateLimiting` via CPI.
+/// Instruction builder for `AdminUpdateMerkleRoot` via CPI.
 ///
 /// ### Accounts:
 ///
-///   0. `[]` whitelist
-///   1. `[writable]` whitelist_entry
-///   2. `[signer]` admin
+///   0. `[writable]` whitelist
+///   1. `[signer]` admin
 #[derive(Clone, Debug)]
-pub struct SetRateLimitingCpiBuilder<'a, 'b> {
-    instruction: Box<SetRateLimitingCpiBuilderInstruction<'a, 'b>>,
+pub struct AdminUpdateMerkleRootCpiBuilder<'a, 'b> {
+    instruction: Box<AdminUpdateMerkleRootCpiBuilderInstruction<'a, 'b>>,
 }
 
-impl<'a, 'b> SetRateLimitingCpiBuilder<'a, 'b> {
+impl<'a, 'b> AdminUpdateMerkleRootCpiBuilder<'a, 'b> {
     pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
-        let instruction = Box::new(SetRateLimitingCpiBuilderInstruction {
+        let instruction = Box::new(AdminUpdateMerkleRootCpiBuilderInstruction {
             __program: program,
             whitelist: None,
-            whitelist_entry: None,
             admin: None,
-            rate_limiting: None,
+            root: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -306,21 +278,13 @@ impl<'a, 'b> SetRateLimitingCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn whitelist_entry(
-        &mut self,
-        whitelist_entry: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.whitelist_entry = Some(whitelist_entry);
-        self
-    }
-    #[inline(always)]
     pub fn admin(&mut self, admin: &'b solana_program::account_info::AccountInfo<'a>) -> &mut Self {
         self.instruction.admin = Some(admin);
         self
     }
     #[inline(always)]
-    pub fn rate_limiting(&mut self, rate_limiting: u64) -> &mut Self {
-        self.instruction.rate_limiting = Some(rate_limiting);
+    pub fn root(&mut self, root: [u8; 32]) -> &mut Self {
+        self.instruction.root = Some(root);
         self
     }
     /// Add an additional account to the instruction.
@@ -364,22 +328,13 @@ impl<'a, 'b> SetRateLimitingCpiBuilder<'a, 'b> {
         &self,
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
-        let args = SetRateLimitingInstructionArgs {
-            rate_limiting: self
-                .instruction
-                .rate_limiting
-                .clone()
-                .expect("rate_limiting is not set"),
+        let args = AdminUpdateMerkleRootInstructionArgs {
+            root: self.instruction.root.clone().expect("root is not set"),
         };
-        let instruction = SetRateLimitingCpi {
+        let instruction = AdminUpdateMerkleRootCpi {
             __program: self.instruction.__program,
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
-
-            whitelist_entry: self
-                .instruction
-                .whitelist_entry
-                .expect("whitelist_entry is not set"),
 
             admin: self.instruction.admin.expect("admin is not set"),
             __args: args,
@@ -392,12 +347,11 @@ impl<'a, 'b> SetRateLimitingCpiBuilder<'a, 'b> {
 }
 
 #[derive(Clone, Debug)]
-struct SetRateLimitingCpiBuilderInstruction<'a, 'b> {
+struct AdminUpdateMerkleRootCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    whitelist_entry: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     admin: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    rate_limiting: Option<u64>,
+    root: Option<[u8; 32]>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

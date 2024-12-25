@@ -8,6 +8,12 @@
 
 import {
   combineCodec,
+  fixDecoderSize,
+  fixEncoderSize,
+  getArrayDecoder,
+  getArrayEncoder,
+  getBytesDecoder,
+  getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
   getU8Decoder,
@@ -24,12 +30,13 @@ import {
   type IInstructionWithData,
   type ReadonlyAccount,
   type ReadonlySignerAccount,
+  type ReadonlyUint8Array,
   type TransactionSigner,
 } from '@solana/web3.js';
 import { NCN_PORTAL_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const CHECK_WHITELISTED_DISCRIMINATOR = 2;
+export const CHECK_WHITELISTED_DISCRIMINATOR = 3;
 
 export function getCheckWhitelistedDiscriminatorBytes() {
   return getU8Encoder().encode(CHECK_WHITELISTED_DISCRIMINATOR);
@@ -59,19 +66,30 @@ export type CheckWhitelistedInstruction<
     ]
   >;
 
-export type CheckWhitelistedInstructionData = { discriminator: number };
+export type CheckWhitelistedInstructionData = {
+  discriminator: number;
+  proof: Array<ReadonlyUint8Array>;
+};
 
-export type CheckWhitelistedInstructionDataArgs = {};
+export type CheckWhitelistedInstructionDataArgs = {
+  proof: Array<ReadonlyUint8Array>;
+};
 
 export function getCheckWhitelistedInstructionDataEncoder(): Encoder<CheckWhitelistedInstructionDataArgs> {
   return transformEncoder(
-    getStructEncoder([['discriminator', getU8Encoder()]]),
+    getStructEncoder([
+      ['discriminator', getU8Encoder()],
+      ['proof', getArrayEncoder(fixEncoderSize(getBytesEncoder(), 32))],
+    ]),
     (value) => ({ ...value, discriminator: CHECK_WHITELISTED_DISCRIMINATOR })
   );
 }
 
 export function getCheckWhitelistedInstructionDataDecoder(): Decoder<CheckWhitelistedInstructionData> {
-  return getStructDecoder([['discriminator', getU8Decoder()]]);
+  return getStructDecoder([
+    ['discriminator', getU8Decoder()],
+    ['proof', getArrayDecoder(fixDecoderSize(getBytesDecoder(), 32))],
+  ]);
 }
 
 export function getCheckWhitelistedInstructionDataCodec(): Codec<
@@ -92,6 +110,7 @@ export type CheckWhitelistedInput<
   whitelist: Address<TAccountWhitelist>;
   whitelistEntry: Address<TAccountWhitelistEntry>;
   whitelisted: TransactionSigner<TAccountWhitelisted>;
+  proof: CheckWhitelistedInstructionDataArgs['proof'];
 };
 
 export function getCheckWhitelistedInstruction<
@@ -126,6 +145,9 @@ export function getCheckWhitelistedInstruction<
     ResolvedAccount
   >;
 
+  // Original args.
+  const args = { ...input };
+
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
@@ -134,7 +156,9 @@ export function getCheckWhitelistedInstruction<
       getAccountMeta(accounts.whitelisted),
     ],
     programAddress,
-    data: getCheckWhitelistedInstructionDataEncoder().encode({}),
+    data: getCheckWhitelistedInstructionDataEncoder().encode(
+      args as CheckWhitelistedInstructionDataArgs
+    ),
   } as CheckWhitelistedInstruction<
     TProgramAddress,
     TAccountWhitelist,

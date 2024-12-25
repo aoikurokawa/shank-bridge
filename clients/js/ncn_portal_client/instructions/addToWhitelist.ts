@@ -32,7 +32,7 @@ import {
 import { NCN_PORTAL_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const ADD_TO_WHITELIST_DISCRIMINATOR = 1;
+export const ADD_TO_WHITELIST_DISCRIMINATOR = 2;
 
 export function getAddToWhitelistDiscriminatorBytes() {
   return getU8Encoder().encode(ADD_TO_WHITELIST_DISCRIMINATOR);
