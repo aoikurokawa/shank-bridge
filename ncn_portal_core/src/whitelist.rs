@@ -4,7 +4,7 @@ use ncn_portal_sdk::error::NcnPortalError;
 use shank::ShankAccount;
 use solana_program::{account_info::AccountInfo, msg, program_error::ProgramError, pubkey::Pubkey};
 
-use crate::discriminators::Discriminators;
+use crate::{discriminators::Discriminators, merkle_root::MerkleRoot};
 
 /// The "base" whitelist account upon which all whitelist entry account addresses are derived
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Pod, Zeroable, AccountDeserialize, ShankAccount)]
@@ -12,6 +12,8 @@ use crate::discriminators::Discriminators;
 pub struct Whitelist {
     // The account that created this whitelist
     pub admin: Pubkey,
+
+    pub merkle_root: MerkleRoot,
 }
 
 impl Discriminator for Whitelist {
@@ -19,8 +21,8 @@ impl Discriminator for Whitelist {
 }
 
 impl Whitelist {
-    pub fn new(admin: Pubkey) -> Self {
-        Self { admin }
+    pub fn new(admin: Pubkey, merkle_root: MerkleRoot) -> Self {
+        Self { admin, merkle_root }
     }
 
     pub fn check_admin(&self, admin_info: &Pubkey) -> Result<(), NcnPortalError> {
@@ -29,6 +31,35 @@ impl Whitelist {
         } else {
             Err(NcnPortalError::NcnPortalWhitelistAdminInvalid)
         }
+    }
+
+    pub fn update_merkle_root(&mut self, merkle_root: MerkleRoot) {
+        self.merkle_root = merkle_root;
+    }
+
+    /// This function deals with verification of Merkle trees (hash trees).
+    /// Direct port of https://github.com/OpenZeppelin/openzeppelin-contracts/blob/v3.4.0/contracts/cryptography/MerkleProof.sol
+    /// Returns true if a `leaf` can be proved to be a part of a Merkle tree
+    /// defined by `root`. For this, a `proof` must be provided, containing
+    /// sibling hashes on the branch from the leaf to the root of the tree. Each
+    /// pair of leaves and each pair of pre-images are assumed to be sorted.
+    pub fn verify(&self, proof: Vec<[u8; 32]>, leaf: [u8; 32]) -> bool {
+        let mut computed_hash = leaf;
+        for proof_element in proof.into_iter() {
+            if computed_hash <= proof_element {
+                // Hash(current computed hash + current element of the proof)
+                computed_hash =
+                    solana_program::hash::hashv(&[&[1u8], &computed_hash, &proof_element])
+                        .to_bytes();
+            } else {
+                // Hash(current element of the proof + current computed hash)
+                computed_hash =
+                    solana_program::hash::hashv(&[&[1u8], &proof_element, &computed_hash])
+                        .to_bytes();
+            }
+        }
+        // Check if the computed hash (root) is equal to the provided root
+        computed_hash == self.merkle_root.root
     }
 
     pub fn seeds() -> Vec<Vec<u8>> {

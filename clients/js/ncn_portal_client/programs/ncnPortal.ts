@@ -14,10 +14,10 @@ import {
 } from '@solana/web3.js';
 import {
   type ParsedAddToWhitelistInstruction,
+  type ParsedAdminUpdateMerkleRootInstruction,
   type ParsedCheckWhitelistedInstruction,
   type ParsedInitializeWhitelistInstruction,
   type ParsedRemoveFromWhitelistInstruction,
-  type ParsedSetRateLimitingInstruction,
 } from '../instructions';
 
 export const NCN_PORTAL_PROGRAM_ADDRESS =
@@ -30,10 +30,10 @@ export enum NcnPortalAccount {
 
 export enum NcnPortalInstruction {
   InitializeWhitelist,
+  AdminUpdateMerkleRoot,
   AddToWhitelist,
   CheckWhitelisted,
   RemoveFromWhitelist,
-  SetRateLimiting,
 }
 
 export function identifyNcnPortalInstruction(
@@ -44,16 +44,16 @@ export function identifyNcnPortalInstruction(
     return NcnPortalInstruction.InitializeWhitelist;
   }
   if (containsBytes(data, getU8Encoder().encode(1), 0)) {
-    return NcnPortalInstruction.AddToWhitelist;
+    return NcnPortalInstruction.AdminUpdateMerkleRoot;
   }
   if (containsBytes(data, getU8Encoder().encode(2), 0)) {
-    return NcnPortalInstruction.CheckWhitelisted;
+    return NcnPortalInstruction.AddToWhitelist;
   }
   if (containsBytes(data, getU8Encoder().encode(3), 0)) {
-    return NcnPortalInstruction.RemoveFromWhitelist;
+    return NcnPortalInstruction.CheckWhitelisted;
   }
   if (containsBytes(data, getU8Encoder().encode(4), 0)) {
-    return NcnPortalInstruction.SetRateLimiting;
+    return NcnPortalInstruction.RemoveFromWhitelist;
   }
   throw new Error(
     'The provided instruction could not be identified as a ncnPortal instruction.'
@@ -67,6 +67,9 @@ export type ParsedNcnPortalInstruction<
       instructionType: NcnPortalInstruction.InitializeWhitelist;
     } & ParsedInitializeWhitelistInstruction<TProgram>)
   | ({
+      instructionType: NcnPortalInstruction.AdminUpdateMerkleRoot;
+    } & ParsedAdminUpdateMerkleRootInstruction<TProgram>)
+  | ({
       instructionType: NcnPortalInstruction.AddToWhitelist;
     } & ParsedAddToWhitelistInstruction<TProgram>)
   | ({
@@ -74,7 +77,4 @@ export type ParsedNcnPortalInstruction<
     } & ParsedCheckWhitelistedInstruction<TProgram>)
   | ({
       instructionType: NcnPortalInstruction.RemoveFromWhitelist;
-    } & ParsedRemoveFromWhitelistInstruction<TProgram>)
-  | ({
-      instructionType: NcnPortalInstruction.SetRateLimiting;
-    } & ParsedSetRateLimitingInstruction<TProgram>);
+    } & ParsedRemoveFromWhitelistInstruction<TProgram>);

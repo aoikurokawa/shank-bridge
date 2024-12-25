@@ -5,6 +5,7 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
+use crate::generated::types::MerkleRoot;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 use solana_program::pubkey::Pubkey;
@@ -18,10 +19,11 @@ pub struct Whitelist {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub admin: Pubkey,
+    pub merkle_root: MerkleRoot,
 }
 
 impl Whitelist {
-    pub const LEN: usize = 32;
+    pub const LEN: usize = 64;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {

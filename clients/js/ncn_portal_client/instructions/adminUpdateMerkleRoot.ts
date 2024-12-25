@@ -8,10 +8,12 @@
 
 import {
   combineCodec,
+  fixDecoderSize,
+  fixEncoderSize,
+  getBytesDecoder,
+  getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU64Decoder,
-  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -24,24 +26,23 @@ import {
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
-  type ReadonlyAccount,
   type ReadonlySignerAccount,
+  type ReadonlyUint8Array,
   type TransactionSigner,
   type WritableAccount,
 } from '@solana/web3.js';
 import { NCN_PORTAL_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const SET_RATE_LIMITING_DISCRIMINATOR = 4;
+export const ADMIN_UPDATE_MERKLE_ROOT_DISCRIMINATOR = 1;
 
-export function getSetRateLimitingDiscriminatorBytes() {
-  return getU8Encoder().encode(SET_RATE_LIMITING_DISCRIMINATOR);
+export function getAdminUpdateMerkleRootDiscriminatorBytes() {
+  return getU8Encoder().encode(ADMIN_UPDATE_MERKLE_ROOT_DISCRIMINATOR);
 }
 
-export type SetRateLimitingInstruction<
+export type AdminUpdateMerkleRootInstruction<
   TProgram extends string = typeof NCN_PORTAL_PROGRAM_ADDRESS,
   TAccountWhitelist extends string | IAccountMeta<string> = string,
-  TAccountWhitelistEntry extends string | IAccountMeta<string> = string,
   TAccountAdmin extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -49,11 +50,8 @@ export type SetRateLimitingInstruction<
   IInstructionWithAccounts<
     [
       TAccountWhitelist extends string
-        ? ReadonlyAccount<TAccountWhitelist>
+        ? WritableAccount<TAccountWhitelist>
         : TAccountWhitelist,
-      TAccountWhitelistEntry extends string
-        ? WritableAccount<TAccountWhitelistEntry>
-        : TAccountWhitelistEntry,
       TAccountAdmin extends string
         ? ReadonlySignerAccount<TAccountAdmin> &
             IAccountSignerMeta<TAccountAdmin>
@@ -62,69 +60,64 @@ export type SetRateLimitingInstruction<
     ]
   >;
 
-export type SetRateLimitingInstructionData = {
+export type AdminUpdateMerkleRootInstructionData = {
   discriminator: number;
-  rateLimiting: bigint;
+  root: ReadonlyUint8Array;
 };
 
-export type SetRateLimitingInstructionDataArgs = {
-  rateLimiting: number | bigint;
+export type AdminUpdateMerkleRootInstructionDataArgs = {
+  root: ReadonlyUint8Array;
 };
 
-export function getSetRateLimitingInstructionDataEncoder(): Encoder<SetRateLimitingInstructionDataArgs> {
+export function getAdminUpdateMerkleRootInstructionDataEncoder(): Encoder<AdminUpdateMerkleRootInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['rateLimiting', getU64Encoder()],
+      ['root', fixEncoderSize(getBytesEncoder(), 32)],
     ]),
-    (value) => ({ ...value, discriminator: SET_RATE_LIMITING_DISCRIMINATOR })
+    (value) => ({
+      ...value,
+      discriminator: ADMIN_UPDATE_MERKLE_ROOT_DISCRIMINATOR,
+    })
   );
 }
 
-export function getSetRateLimitingInstructionDataDecoder(): Decoder<SetRateLimitingInstructionData> {
+export function getAdminUpdateMerkleRootInstructionDataDecoder(): Decoder<AdminUpdateMerkleRootInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['rateLimiting', getU64Decoder()],
+    ['root', fixDecoderSize(getBytesDecoder(), 32)],
   ]);
 }
 
-export function getSetRateLimitingInstructionDataCodec(): Codec<
-  SetRateLimitingInstructionDataArgs,
-  SetRateLimitingInstructionData
+export function getAdminUpdateMerkleRootInstructionDataCodec(): Codec<
+  AdminUpdateMerkleRootInstructionDataArgs,
+  AdminUpdateMerkleRootInstructionData
 > {
   return combineCodec(
-    getSetRateLimitingInstructionDataEncoder(),
-    getSetRateLimitingInstructionDataDecoder()
+    getAdminUpdateMerkleRootInstructionDataEncoder(),
+    getAdminUpdateMerkleRootInstructionDataDecoder()
   );
 }
 
-export type SetRateLimitingInput<
+export type AdminUpdateMerkleRootInput<
   TAccountWhitelist extends string = string,
-  TAccountWhitelistEntry extends string = string,
   TAccountAdmin extends string = string,
 > = {
   whitelist: Address<TAccountWhitelist>;
-  whitelistEntry: Address<TAccountWhitelistEntry>;
   admin: TransactionSigner<TAccountAdmin>;
-  rateLimiting: SetRateLimitingInstructionDataArgs['rateLimiting'];
+  root: AdminUpdateMerkleRootInstructionDataArgs['root'];
 };
 
-export function getSetRateLimitingInstruction<
+export function getAdminUpdateMerkleRootInstruction<
   TAccountWhitelist extends string,
-  TAccountWhitelistEntry extends string,
   TAccountAdmin extends string,
   TProgramAddress extends Address = typeof NCN_PORTAL_PROGRAM_ADDRESS,
 >(
-  input: SetRateLimitingInput<
-    TAccountWhitelist,
-    TAccountWhitelistEntry,
-    TAccountAdmin
-  >,
+  input: AdminUpdateMerkleRootInput<TAccountWhitelist, TAccountAdmin>,
   config?: { programAddress?: TProgramAddress }
-): SetRateLimitingInstruction<
+): AdminUpdateMerkleRootInstruction<
   TProgramAddress,
   TAccountWhitelist,
-  TAccountWhitelistEntry,
   TAccountAdmin
 > {
   // Program address.
@@ -132,8 +125,7 @@ export function getSetRateLimitingInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    whitelist: { value: input.whitelist ?? null, isWritable: false },
-    whitelistEntry: { value: input.whitelistEntry ?? null, isWritable: true },
+    whitelist: { value: input.whitelist ?? null, isWritable: true },
     admin: { value: input.admin ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -148,45 +140,42 @@ export function getSetRateLimitingInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.whitelist),
-      getAccountMeta(accounts.whitelistEntry),
       getAccountMeta(accounts.admin),
     ],
     programAddress,
-    data: getSetRateLimitingInstructionDataEncoder().encode(
-      args as SetRateLimitingInstructionDataArgs
+    data: getAdminUpdateMerkleRootInstructionDataEncoder().encode(
+      args as AdminUpdateMerkleRootInstructionDataArgs
     ),
-  } as SetRateLimitingInstruction<
+  } as AdminUpdateMerkleRootInstruction<
     TProgramAddress,
     TAccountWhitelist,
-    TAccountWhitelistEntry,
     TAccountAdmin
   >;
 
   return instruction;
 }
 
-export type ParsedSetRateLimitingInstruction<
+export type ParsedAdminUpdateMerkleRootInstruction<
   TProgram extends string = typeof NCN_PORTAL_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
     whitelist: TAccountMetas[0];
-    whitelistEntry: TAccountMetas[1];
-    admin: TAccountMetas[2];
+    admin: TAccountMetas[1];
   };
-  data: SetRateLimitingInstructionData;
+  data: AdminUpdateMerkleRootInstructionData;
 };
 
-export function parseSetRateLimitingInstruction<
+export function parseAdminUpdateMerkleRootInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedSetRateLimitingInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+): ParsedAdminUpdateMerkleRootInstruction<TProgram, TAccountMetas> {
+  if (instruction.accounts.length < 2) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -200,9 +189,10 @@ export function parseSetRateLimitingInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       whitelist: getNextAccount(),
-      whitelistEntry: getNextAccount(),
       admin: getNextAccount(),
     },
-    data: getSetRateLimitingInstructionDataDecoder().decode(instruction.data),
+    data: getAdminUpdateMerkleRootInstructionDataDecoder().decode(
+      instruction.data
+    ),
   };
 }

@@ -7,6 +7,7 @@ edition = "2021"
 borsh = { workspace = true }
 jito-bytemuck = { workspace = true }
 jito-jsm-core = { workspace = true }
+meta-merkle-tree = { workspace = true }
 ncn-portal-core = { workspace = true }
 ncn-portal-program = { workspace = true }
 ncn-portal-sdk = { workspace = true }

@@ -71,7 +71,7 @@ pub struct RemoveFromWhitelistInstructionData {
 
 impl RemoveFromWhitelistInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 3 }
+        Self { discriminator: 4 }
     }
 }
 

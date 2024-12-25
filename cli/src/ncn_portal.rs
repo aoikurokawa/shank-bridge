@@ -18,6 +18,8 @@ pub enum WhitelistActions {
     Initialize,
     /// Get the whitelist
     Get,
+    /// Update Merkle Root
+    AdminUpdateMerkleRoot { root: Vec<u8> },
     /// Add to whitelist
     AddToWhitelist {
         whitelisted: Pubkey,

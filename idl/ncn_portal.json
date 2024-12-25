@@ -21,10 +21,50 @@
           "isSigner": false
         }
       ],
-      "args": [],
+      "args": [
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ],
       "discriminant": {
         "type": "u8",
         "value": 0
+      }
+    },
+    {
+      "name": "AdminUpdateMerkleRoot",
+      "accounts": [
+        {
+          "name": "whitelist",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "admin",
+          "isMut": false,
+          "isSigner": true
+        }
+      ],
+      "args": [
+        {
+          "name": "root",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        }
+      ],
+      "discriminant": {
+        "type": "u8",
+        "value": 1
       }
     },
     {
@@ -64,7 +104,7 @@
       ],
       "discriminant": {
         "type": "u8",
-        "value": 1
+        "value": 2
       }
     },
     {
@@ -86,10 +126,22 @@
           "isSigner": true
         }
       ],
-      "args": [],
+      "args": [
+        {
+          "name": "proof",
+          "type": {
+            "vec": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        }
+      ],
       "discriminant": {
         "type": "u8",
-        "value": 2
+        "value": 3
       }
     },
     {
@@ -124,36 +176,6 @@
       "args": [],
       "discriminant": {
         "type": "u8",
-        "value": 3
-      }
-    },
-    {
-      "name": "SetRateLimiting",
-      "accounts": [
-        {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "whitelistEntry",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "admin",
-          "isMut": false,
-          "isSigner": true
-        }
-      ],
-      "args": [
-        {
-          "name": "rateLimiting",
-          "type": "u64"
-        }
-      ],
-      "discriminant": {
-        "type": "u8",
         "value": 4
       }
     }
@@ -167,6 +189,12 @@
           {
             "name": "admin",
             "type": "publicKey"
+          },
+          {
+            "name": "merkleRoot",
+            "type": {
+              "defined": "MerkleRoot"
+            }
           }
         ]
       }
@@ -188,6 +216,25 @@
             "name": "rateLimiting",
             "type": {
               "defined": "PodU64"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "types": [
+    {
+      "name": "MerkleRoot",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "root",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
             }
           }
         ]

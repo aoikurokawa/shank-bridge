@@ -7,7 +7,7 @@
  */
 
 export * from './addToWhitelist';
+export * from './adminUpdateMerkleRoot';
 export * from './checkWhitelisted';
 export * from './initializeWhitelist';
 export * from './removeFromWhitelist';
-export * from './setRateLimiting';

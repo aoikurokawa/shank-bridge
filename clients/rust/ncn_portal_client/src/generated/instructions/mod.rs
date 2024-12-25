@@ -6,13 +6,13 @@
 //!
 
 pub(crate) mod r#add_to_whitelist;
+pub(crate) mod r#admin_update_merkle_root;
 pub(crate) mod r#check_whitelisted;
 pub(crate) mod r#initialize_whitelist;
 pub(crate) mod r#remove_from_whitelist;
-pub(crate) mod r#set_rate_limiting;
 
 pub use self::r#add_to_whitelist::*;
+pub use self::r#admin_update_merkle_root::*;
 pub use self::r#check_whitelisted::*;
 pub use self::r#initialize_whitelist::*;
 pub use self::r#remove_from_whitelist::*;
-pub use self::r#set_rate_limiting::*;

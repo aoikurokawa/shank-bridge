@@ -74,7 +74,7 @@ pub struct AddToWhitelistInstructionData {
 
 impl AddToWhitelistInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 1 }
+        Self { discriminator: 2 }
     }
 }
 

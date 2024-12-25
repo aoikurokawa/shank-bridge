@@ -8,6 +8,10 @@
 
 import {
   combineCodec,
+  fixDecoderSize,
+  fixEncoderSize,
+  getBytesDecoder,
+  getBytesEncoder,
   getStructDecoder,
   getStructEncoder,
   getU8Decoder,
@@ -23,6 +27,7 @@ import {
   type IInstructionWithAccounts,
   type IInstructionWithData,
   type ReadonlyAccount,
+  type ReadonlyUint8Array,
   type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
@@ -62,19 +67,30 @@ export type InitializeWhitelistInstruction<
     ]
   >;
 
-export type InitializeWhitelistInstructionData = { discriminator: number };
+export type InitializeWhitelistInstructionData = {
+  discriminator: number;
+  root: ReadonlyUint8Array;
+};
 
-export type InitializeWhitelistInstructionDataArgs = {};
+export type InitializeWhitelistInstructionDataArgs = {
+  root: ReadonlyUint8Array;
+};
 
 export function getInitializeWhitelistInstructionDataEncoder(): Encoder<InitializeWhitelistInstructionDataArgs> {
   return transformEncoder(
-    getStructEncoder([['discriminator', getU8Encoder()]]),
+    getStructEncoder([
+      ['discriminator', getU8Encoder()],
+      ['root', fixEncoderSize(getBytesEncoder(), 32)],
+    ]),
     (value) => ({ ...value, discriminator: INITIALIZE_WHITELIST_DISCRIMINATOR })
   );
 }
 
 export function getInitializeWhitelistInstructionDataDecoder(): Decoder<InitializeWhitelistInstructionData> {
-  return getStructDecoder([['discriminator', getU8Decoder()]]);
+  return getStructDecoder([
+    ['discriminator', getU8Decoder()],
+    ['root', fixDecoderSize(getBytesDecoder(), 32)],
+  ]);
 }
 
 export function getInitializeWhitelistInstructionDataCodec(): Codec<
@@ -95,6 +111,7 @@ export type InitializeWhitelistInput<
   whitelist: Address<TAccountWhitelist>;
   admin: TransactionSigner<TAccountAdmin>;
   systemProgram?: Address<TAccountSystemProgram>;
+  root: InitializeWhitelistInstructionDataArgs['root'];
 };
 
 export function getInitializeWhitelistInstruction<
@@ -129,6 +146,9 @@ export function getInitializeWhitelistInstruction<
     ResolvedAccount
   >;
 
+  // Original args.
+  const args = { ...input };
+
   // Resolve default values.
   if (!accounts.systemProgram.value) {
     accounts.systemProgram.value =
@@ -143,7 +163,9 @@ export function getInitializeWhitelistInstruction<
       getAccountMeta(accounts.systemProgram),
     ],
     programAddress,
-    data: getInitializeWhitelistInstructionDataEncoder().encode({}),
+    data: getInitializeWhitelistInstructionDataEncoder().encode(
+      args as InitializeWhitelistInstructionDataArgs
+    ),
   } as InitializeWhitelistInstruction<
     TProgramAddress,
     TAccountWhitelist,
