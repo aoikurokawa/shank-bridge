@@ -1,24 +1,12 @@
-use std::str::FromStr;
-
 use anyhow::{anyhow, Result};
-use jito_bytemuck::{AccountDeserialize, Discriminator};
+use jito_bytemuck::AccountDeserialize;
 use log::{debug, info};
-use ncn_portal_client::instructions::{
-    AddToWhitelistBuilder, InitializeWhitelistBuilder, RemoveFromWhitelistBuilder,
-};
+use ncn_portal_client::instructions::RemoveFromWhitelistBuilder;
 use ncn_portal_core::{whitelist::Whitelist, whitelist_entry::WhitelistEntry};
-use ncn_portal_sdk::sdk::{add_to_whitelist, initialize_whitelist};
-use solana_account_decoder::UiAccountEncoding;
+use ncn_portal_sdk::sdk::{add_to_whitelist, admin_update_merkle_tree, initialize_whitelist};
 use solana_program::pubkey::Pubkey;
 use solana_rpc_client::{nonblocking::rpc_client::RpcClient, rpc_client::SerializableTransaction};
-use solana_rpc_client_api::{
-    config::{RpcAccountInfoConfig, RpcProgramAccountsConfig},
-    filter::{Memcmp, MemcmpEncodedBytes, RpcFilterType},
-};
-use solana_sdk::{
-    signature::{Keypair, Signer},
-    transaction::Transaction,
-};
+use solana_sdk::{signature::Signer, transaction::Transaction};
 
 use crate::{
     ncn_portal::{NcnPortalCommands, WhitelistActions},
@@ -50,6 +38,9 @@ impl NcnPortalCliHandler {
             NcnPortalCommands::Whitelist {
                 action: WhitelistActions::Get,
             } => self.get_whitelist().await,
+            NcnPortalCommands::Whitelist {
+                action: WhitelistActions::AdminUpdateMerkleRoot { root },
+            } => self.admint_update_merkle_root(root).await,
             NcnPortalCommands::Whitelist {
                 action:
                     WhitelistActions::AddToWhitelist {
@@ -146,6 +137,52 @@ impl NcnPortalCliHandler {
             blockhash,
         );
         info!("Adding To Whitelist transaction: {:?}", tx.get_signature());
+        let result = rpc_client.send_and_confirm_transaction(&tx).await?;
+        info!("Transaction confirmed: {:?}", result);
+        let statuses = rpc_client
+            .get_signature_statuses(&[*tx.get_signature()])
+            .await?;
+
+        let tx_status = statuses
+            .value
+            .first()
+            .unwrap()
+            .as_ref()
+            .ok_or_else(|| anyhow!("No signature status"))?;
+        info!("Transaction status: {:?}", tx_status);
+
+        Ok(())
+    }
+
+    async fn admint_update_merkle_root(&self, merkle_root: Vec<u8>) -> Result<()> {
+        let keypair = self
+            .cli_config
+            .keypair
+            .as_ref()
+            .ok_or_else(|| anyhow!("No keypair"))?;
+        let rpc_client = self.get_rpc_client();
+
+        let whitelist_address = Whitelist::find_program_address(&self.ncn_portal_program_id).0;
+
+        let mut root = [0u8; 32];
+        let len = merkle_root.len().min(32);
+        root[..len].copy_from_slice(&merkle_root[..len]);
+
+        let ix = admin_update_merkle_tree(
+            &self.ncn_portal_program_id,
+            &whitelist_address,
+            &keypair.pubkey(),
+            root,
+        );
+
+        let blockhash = rpc_client.get_latest_blockhash().await?;
+        let tx = Transaction::new_signed_with_payer(
+            &[ix],
+            Some(&keypair.pubkey()),
+            &[keypair],
+            blockhash,
+        );
+        info!("Updating Whitelist transaction: {:?}", tx.get_signature());
         let result = rpc_client.send_and_confirm_transaction(&tx).await?;
         info!("Transaction confirmed: {:?}", result);
         let statuses = rpc_client
