@@ -1,9 +1,11 @@
 mod add_to_whitelist;
+mod admin_update_merkle_root;
 mod check_whitelisted;
 mod initialize_whitelist;
 mod remove_from_whitelist;
 
 use add_to_whitelist::process_add_to_whitelist;
+use admin_update_merkle_root::process_admin_update_merkle_root;
 use borsh::BorshDeserialize;
 use check_whitelisted::process_check_whitelisted;
 use const_str_to_pubkey::str_to_pubkey;
@@ -32,22 +34,25 @@ pub fn process_instruction(
     let instruction = NcnPortalInstruction::try_from_slice(instruction_data)?;
 
     match instruction {
-        NcnPortalInstruction::InitializeWhitelist => {
+        NcnPortalInstruction::InitializeWhitelist { root } => {
             msg!("Instruction: InitializeWhitelist");
-            process_initialize_whitelist(program_id, accounts)
+            process_initialize_whitelist(program_id, accounts, root)
+        }
+        NcnPortalInstruction::AdminUpdateMerkleRoot { root } => {
+            msg!("Instruction: AdminUpdateMerkleRoot");
+            process_admin_update_merkle_root(program_id, accounts, root)
         }
         NcnPortalInstruction::AddToWhitelist { rate_limiting } => {
             msg!("Instruction: AddToWhitelist");
             process_add_to_whitelist(program_id, accounts, rate_limiting)
         }
-        NcnPortalInstruction::CheckWhitelisted => {
+        NcnPortalInstruction::CheckWhitelisted { proof } => {
             msg!("Instruction: CheckWhitelisted");
-            process_check_whitelisted(program_id, accounts)
+            process_check_whitelisted(program_id, accounts, proof)
         }
         NcnPortalInstruction::RemoveFromWhitelist => {
             msg!("Instruction: RemoveFromWhitelist");
             process_remove_from_whitelist(program_id, accounts)
         }
-        NcnPortalInstruction::SetRateLimiting { rate_limiting } => todo!(),
     }
 }

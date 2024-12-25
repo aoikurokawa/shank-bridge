@@ -77,6 +77,7 @@ impl NcnPortalCliHandler {
             &self.ncn_portal_program_id,
             &whitelist_address,
             &keypair.pubkey(),
+            [0u8; 32],
         );
         let blockhash = rpc_client.get_latest_blockhash().await?;
         let tx = Transaction::new_signed_with_payer(

@@ -3,7 +3,7 @@ use jito_jsm_core::{
     create_account,
     loader::{load_signer, load_system_account, load_system_program},
 };
-use ncn_portal_core::whitelist::Whitelist;
+use ncn_portal_core::{merkle_root::MerkleRoot, whitelist::Whitelist};
 use ncn_portal_sdk::error::NcnPortalError;
 use solana_program::{
     account_info::AccountInfo, entrypoint::ProgramResult, msg, program_error::ProgramError,
@@ -13,6 +13,7 @@ use solana_program::{
 pub fn process_initialize_whitelist(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
+    root: [u8; 32],
 ) -> ProgramResult {
     let [whitelist, admin, system_program] = accounts else {
         return Err(ProgramError::NotEnoughAccountKeys);
@@ -47,7 +48,7 @@ pub fn process_initialize_whitelist(
     let mut whitelist_data = whitelist.try_borrow_mut_data()?;
     whitelist_data[0] = Whitelist::DISCRIMINATOR;
     let whitelist = Whitelist::try_from_slice_unchecked_mut(&mut whitelist_data)?;
-    *whitelist = Whitelist::new(*admin.key);
+    *whitelist = Whitelist::new(*admin.key, MerkleRoot { root });
 
     Ok(())
 }

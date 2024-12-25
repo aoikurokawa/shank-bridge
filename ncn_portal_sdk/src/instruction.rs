@@ -7,7 +7,12 @@ pub enum NcnPortalInstruction {
     #[account(0, writable, name = "whitelist")]
     #[account(1, writable, signer, name = "admin")]
     #[account(2, name = "system_program")]
-    InitializeWhitelist,
+    InitializeWhitelist { root: [u8; 32] },
+
+    /// Initializes global configuration
+    #[account(0, writable, name = "whitelist")]
+    #[account(1, signer, name = "admin")]
+    AdminUpdateMerkleRoot { root: [u8; 32] },
 
     /// Initializes global configuration
     #[account(0, name = "whitelist")]
@@ -21,7 +26,7 @@ pub enum NcnPortalInstruction {
     #[account(0, name = "whitelist")]
     #[account(1, name = "whitelist_entry")]
     #[account(2, signer, name = "whitelisted")]
-    CheckWhitelisted,
+    CheckWhitelisted { proof: Vec<[u8; 32]> },
 
     /// Removed from Whitelist
     #[account(0, name = "whitelist")]
@@ -30,10 +35,4 @@ pub enum NcnPortalInstruction {
     #[account(3, signer, name = "admin_info")]
     #[account(4, name = "system_program")]
     RemoveFromWhitelist,
-
-    /// Set RateLimiting
-    #[account(0, name = "whitelist")]
-    #[account(1, writable, name = "whitelist_entry")]
-    #[account(2, signer, name = "admin")]
-    SetRateLimiting { rate_limiting: u64 },
 }

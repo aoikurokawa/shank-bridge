@@ -2900,6 +2900,7 @@ dependencies = [
  "borsh 0.10.4",
  "jito-bytemuck",
  "jito-jsm-core",
+ "meta-merkle-tree",
  "ncn-portal-core",
  "ncn-portal-program",
  "ncn-portal-sdk",

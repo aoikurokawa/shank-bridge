@@ -31,12 +31,13 @@ impl NcnPortalProgramClient {
         )?)
     }
 
-    pub async fn do_initialize_whitelist(&mut self) -> TestResult<Keypair> {
+    pub async fn do_initialize_whitelist(&mut self, root: &[u8; 32]) -> TestResult<Keypair> {
         let whitelist_pubkey = Whitelist::find_program_address(&ncn_portal_program::id()).0;
         let admin = Keypair::new();
 
         self._airdrop(&admin.pubkey(), 1.0).await?;
-        self.initialize_whitelist(&whitelist_pubkey, &admin).await?;
+        self.initialize_whitelist(&whitelist_pubkey, &admin, root)
+            .await?;
 
         Ok(admin)
     }
@@ -45,6 +46,7 @@ impl NcnPortalProgramClient {
         &mut self,
         whitelist: &Pubkey,
         admin: &Keypair,
+        root: &[u8; 32],
     ) -> TestResult<()> {
         let blockhash = self.banks_client.get_latest_blockhash().await?;
         self.process_transaction(&Transaction::new_signed_with_payer(
@@ -52,6 +54,7 @@ impl NcnPortalProgramClient {
                 &ncn_portal_program::id(),
                 whitelist,
                 &admin.pubkey(),
+                *root,
             )],
             Some(&admin.pubkey()),
             &[admin],
@@ -119,7 +122,11 @@ impl NcnPortalProgramClient {
         .await
     }
 
-    pub async fn do_check_whitelisted(&mut self, whitelisted: &Keypair) -> TestResult<()> {
+    pub async fn do_check_whitelisted(
+        &mut self,
+        whitelisted: &Keypair,
+        proof: Vec<[u8; 32]>,
+    ) -> TestResult<()> {
         let whitelist_pubkey = Whitelist::find_program_address(&ncn_portal_program::id()).0;
         let whitelist_entry_pubkey = WhitelistEntry::find_program_address(
             &ncn_portal_program::id(),
@@ -130,8 +137,13 @@ impl NcnPortalProgramClient {
 
         self._airdrop(&whitelisted.pubkey(), 1.0).await?;
 
-        self.check_whitelisted(&whitelist_pubkey, &whitelist_entry_pubkey, whitelisted)
-            .await?;
+        self.check_whitelisted(
+            &whitelist_pubkey,
+            &whitelist_entry_pubkey,
+            whitelisted,
+            proof,
+        )
+        .await?;
 
         Ok(())
     }
@@ -141,6 +153,7 @@ impl NcnPortalProgramClient {
         whitelist: &Pubkey,
         whitelist_entry: &Pubkey,
         whitelisted: &Keypair,
+        proof: Vec<[u8; 32]>,
     ) -> TestResult<()> {
         let blockhash = self.banks_client.get_latest_blockhash().await?;
         self.process_transaction(&Transaction::new_signed_with_payer(
@@ -149,6 +162,7 @@ impl NcnPortalProgramClient {
                 whitelist,
                 whitelist_entry,
                 &whitelisted.pubkey(),
+                proof,
             )],
             Some(&whitelisted.pubkey()),
             &[whitelisted],

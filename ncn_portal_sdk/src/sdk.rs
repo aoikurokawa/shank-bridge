@@ -11,6 +11,7 @@ pub fn initialize_whitelist(
     program_id: &Pubkey,
     whitelist: &Pubkey,
     admin: &Pubkey,
+    root: [u8; 32],
 ) -> Instruction {
     let accounts = vec![
         AccountMeta::new(*whitelist, false),
@@ -20,7 +21,7 @@ pub fn initialize_whitelist(
     Instruction {
         program_id: *program_id,
         accounts,
-        data: NcnPortalInstruction::InitializeWhitelist
+        data: NcnPortalInstruction::InitializeWhitelist { root }
             .try_to_vec()
             .unwrap(),
     }
@@ -55,6 +56,7 @@ pub fn check_whitelisted(
     whitelist: &Pubkey,
     whitelist_entry: &Pubkey,
     whitelisted: &Pubkey,
+    proof: Vec<[u8; 32]>,
 ) -> Instruction {
     let accounts = vec![
         AccountMeta::new_readonly(*whitelist, false),
@@ -64,7 +66,9 @@ pub fn check_whitelisted(
     Instruction {
         program_id: *program_id,
         accounts,
-        data: NcnPortalInstruction::CheckWhitelisted.try_to_vec().unwrap(),
+        data: NcnPortalInstruction::CheckWhitelisted { proof }
+            .try_to_vec()
+            .unwrap(),
     }
 }
 

@@ -11,8 +11,10 @@ mod tests {
 
         let mut ncn_portal_program_client = fixture.ncn_portal_program_client();
 
+        let root = [0u8; 32];
+
         let admin = ncn_portal_program_client
-            .do_initialize_whitelist()
+            .do_initialize_whitelist(&root)
             .await
             .unwrap();
 

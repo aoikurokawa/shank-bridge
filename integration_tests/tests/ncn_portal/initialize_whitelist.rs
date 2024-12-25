@@ -13,8 +13,10 @@ mod tests {
 
         let whitelist_pubkey = Whitelist::find_program_address(&ncn_portal_program::id()).0;
 
+        let root = [0u8; 32];
+
         let admin = ncn_portal_program_client
-            .do_initialize_whitelist()
+            .do_initialize_whitelist(&root)
             .await
             .unwrap();
 
