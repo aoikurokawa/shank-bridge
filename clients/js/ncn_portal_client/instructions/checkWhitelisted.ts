@@ -45,7 +45,6 @@ export function getCheckWhitelistedDiscriminatorBytes() {
 export type CheckWhitelistedInstruction<
   TProgram extends string = typeof NCN_PORTAL_PROGRAM_ADDRESS,
   TAccountWhitelist extends string | IAccountMeta<string> = string,
-  TAccountWhitelistEntry extends string | IAccountMeta<string> = string,
   TAccountWhitelisted extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
@@ -55,9 +54,6 @@ export type CheckWhitelistedInstruction<
       TAccountWhitelist extends string
         ? ReadonlyAccount<TAccountWhitelist>
         : TAccountWhitelist,
-      TAccountWhitelistEntry extends string
-        ? ReadonlyAccount<TAccountWhitelistEntry>
-        : TAccountWhitelistEntry,
       TAccountWhitelisted extends string
         ? ReadonlySignerAccount<TAccountWhitelisted> &
             IAccountSignerMeta<TAccountWhitelisted>
@@ -104,31 +100,23 @@ export function getCheckWhitelistedInstructionDataCodec(): Codec<
 
 export type CheckWhitelistedInput<
   TAccountWhitelist extends string = string,
-  TAccountWhitelistEntry extends string = string,
   TAccountWhitelisted extends string = string,
 > = {
   whitelist: Address<TAccountWhitelist>;
-  whitelistEntry: Address<TAccountWhitelistEntry>;
   whitelisted: TransactionSigner<TAccountWhitelisted>;
   proof: CheckWhitelistedInstructionDataArgs['proof'];
 };
 
 export function getCheckWhitelistedInstruction<
   TAccountWhitelist extends string,
-  TAccountWhitelistEntry extends string,
   TAccountWhitelisted extends string,
   TProgramAddress extends Address = typeof NCN_PORTAL_PROGRAM_ADDRESS,
 >(
-  input: CheckWhitelistedInput<
-    TAccountWhitelist,
-    TAccountWhitelistEntry,
-    TAccountWhitelisted
-  >,
+  input: CheckWhitelistedInput<TAccountWhitelist, TAccountWhitelisted>,
   config?: { programAddress?: TProgramAddress }
 ): CheckWhitelistedInstruction<
   TProgramAddress,
   TAccountWhitelist,
-  TAccountWhitelistEntry,
   TAccountWhitelisted
 > {
   // Program address.
@@ -137,7 +125,6 @@ export function getCheckWhitelistedInstruction<
   // Original accounts.
   const originalAccounts = {
     whitelist: { value: input.whitelist ?? null, isWritable: false },
-    whitelistEntry: { value: input.whitelistEntry ?? null, isWritable: false },
     whitelisted: { value: input.whitelisted ?? null, isWritable: false },
   };
   const accounts = originalAccounts as Record<
@@ -152,7 +139,6 @@ export function getCheckWhitelistedInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.whitelist),
-      getAccountMeta(accounts.whitelistEntry),
       getAccountMeta(accounts.whitelisted),
     ],
     programAddress,
@@ -162,7 +148,6 @@ export function getCheckWhitelistedInstruction<
   } as CheckWhitelistedInstruction<
     TProgramAddress,
     TAccountWhitelist,
-    TAccountWhitelistEntry,
     TAccountWhitelisted
   >;
 
@@ -176,8 +161,7 @@ export type ParsedCheckWhitelistedInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     whitelist: TAccountMetas[0];
-    whitelistEntry: TAccountMetas[1];
-    whitelisted: TAccountMetas[2];
+    whitelisted: TAccountMetas[1];
   };
   data: CheckWhitelistedInstructionData;
 };
@@ -190,7 +174,7 @@ export function parseCheckWhitelistedInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedCheckWhitelistedInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 3) {
+  if (instruction.accounts.length < 2) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -204,7 +188,6 @@ export function parseCheckWhitelistedInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       whitelist: getNextAccount(),
-      whitelistEntry: getNextAccount(),
       whitelisted: getNextAccount(),
     },
     data: getCheckWhitelistedInstructionDataDecoder().decode(instruction.data),
