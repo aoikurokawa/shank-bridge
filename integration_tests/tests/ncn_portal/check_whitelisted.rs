@@ -17,18 +17,18 @@ mod tests {
         let tree_nodes = vec![TreeNode::new(&alice, 0), TreeNode::new(&bob, 0)];
         let merkle_info = MetaMerkleTree::new(tree_nodes).unwrap();
 
-        let admin = ncn_portal_program_client
+        let _admin = ncn_portal_program_client
             .do_initialize_whitelist(&merkle_info.merkle_root)
             .await
             .unwrap();
 
         let whitelisted = Keypair::new();
-        let rate_limiting = 10;
+        // let rate_limiting = 10;
 
-        ncn_portal_program_client
-            .do_add_to_whitelist(&whitelisted.pubkey(), &admin, rate_limiting)
-            .await
-            .unwrap();
+        // ncn_portal_program_client
+        //     .do_add_to_whitelist(&whitelisted.pubkey(), &admin, rate_limiting)
+        //     .await
+        //     .unwrap();
 
         let proof = &merkle_info.tree_nodes[0].proof.clone().unwrap().clone();
 
