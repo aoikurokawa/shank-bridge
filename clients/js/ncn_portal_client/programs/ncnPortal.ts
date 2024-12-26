@@ -21,7 +21,7 @@ import {
 } from '../instructions';
 
 export const NCN_PORTAL_PROGRAM_ADDRESS =
-  'DwyMNTQ5aSduQhx3Pjra9kXeySxjD5YUkC1bDXmvEPFZ' as Address<'DwyMNTQ5aSduQhx3Pjra9kXeySxjD5YUkC1bDXmvEPFZ'>;
+  'DXWJEC5JBUeNurpo7wPDUHGhDWnjkTzUiV3gp2D9y8z' as Address<'DXWJEC5JBUeNurpo7wPDUHGhDWnjkTzUiV3gp2D9y8z'>;
 
 export enum NcnPortalAccount {
   Whitelist,
@@ -61,7 +61,7 @@ export function identifyNcnPortalInstruction(
 }
 
 export type ParsedNcnPortalInstruction<
-  TProgram extends string = 'DwyMNTQ5aSduQhx3Pjra9kXeySxjD5YUkC1bDXmvEPFZ',
+  TProgram extends string = 'DXWJEC5JBUeNurpo7wPDUHGhDWnjkTzUiV3gp2D9y8z',
 > =
   | ({
       instructionType: NcnPortalInstruction.InitializeWhitelist;
