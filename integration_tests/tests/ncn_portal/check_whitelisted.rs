@@ -12,8 +12,9 @@ mod tests {
         let mut ncn_portal_program_client = fixture.ncn_portal_program_client();
 
         let alice = Pubkey::new_unique();
+        let bob = Pubkey::new_unique();
 
-        let tree_nodes = vec![TreeNode::new(&alice, 0)];
+        let tree_nodes = vec![TreeNode::new(&alice, 0), TreeNode::new(&bob, 0)];
         let merkle_info = MetaMerkleTree::new(tree_nodes).unwrap();
 
         let admin = ncn_portal_program_client

@@ -128,22 +128,11 @@ impl NcnPortalProgramClient {
         proof: Vec<[u8; 32]>,
     ) -> TestResult<()> {
         let whitelist_pubkey = Whitelist::find_program_address(&ncn_portal_program::id()).0;
-        let whitelist_entry_pubkey = WhitelistEntry::find_program_address(
-            &ncn_portal_program::id(),
-            &whitelist_pubkey,
-            &whitelisted.pubkey(),
-        )
-        .0;
 
         self._airdrop(&whitelisted.pubkey(), 1.0).await?;
 
-        self.check_whitelisted(
-            &whitelist_pubkey,
-            &whitelist_entry_pubkey,
-            whitelisted,
-            proof,
-        )
-        .await?;
+        self.check_whitelisted(&whitelist_pubkey, whitelisted, proof)
+            .await?;
 
         Ok(())
     }
@@ -151,7 +140,6 @@ impl NcnPortalProgramClient {
     pub async fn check_whitelisted(
         &mut self,
         whitelist: &Pubkey,
-        whitelist_entry: &Pubkey,
         whitelisted: &Keypair,
         proof: Vec<[u8; 32]>,
     ) -> TestResult<()> {
@@ -160,7 +148,6 @@ impl NcnPortalProgramClient {
             &[check_whitelisted(
                 &ncn_portal_program::id(),
                 whitelist,
-                whitelist_entry,
                 &whitelisted.pubkey(),
                 proof,
             )],
