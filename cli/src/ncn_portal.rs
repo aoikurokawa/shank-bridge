@@ -22,9 +22,6 @@ pub enum WhitelistActions {
     AdminUpdateMerkleRoot {
         #[clap(long)]
         url: String,
-
-        #[clap(long)]
-        pubkeys: Vec<Pubkey>,
     },
     /// Add to whitelist
     AddToWhitelist {

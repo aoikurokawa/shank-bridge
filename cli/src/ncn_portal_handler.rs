@@ -48,8 +48,8 @@ impl NcnPortalCliHandler {
                 action: WhitelistActions::Get,
             } => self.get_whitelist().await,
             NcnPortalCommands::Whitelist {
-                action: WhitelistActions::AdminUpdateMerkleRoot { url, pubkeys },
-            } => self.admin_update_merkle_root(url, pubkeys).await,
+                action: WhitelistActions::AdminUpdateMerkleRoot { url },
+            } => self.admin_update_merkle_root(url).await,
             NcnPortalCommands::Whitelist {
                 action:
                     WhitelistActions::AddToWhitelist {
@@ -163,7 +163,7 @@ impl NcnPortalCliHandler {
         Ok(())
     }
 
-    async fn admin_update_merkle_root(&self, url: String, pubkeys: Vec<Pubkey>) -> Result<()> {
+    async fn admin_update_merkle_root(&self, url: String) -> Result<()> {
         let keypair = self
             .cli_config
             .keypair
@@ -173,50 +173,55 @@ impl NcnPortalCliHandler {
 
         let whitelist_address = Whitelist::find_program_address(&self.ncn_portal_program_id).0;
 
-        // let res = reqwest::get(&url)
-        //     .await?
-        //     .json::<NcnPortalResponse>()
-        //     .await?;
-        // if let Some(addresses) = res.data {
-        let mut tree_nodes = Vec::new();
-        for address in pubkeys {
-            let tree_node = TreeNode::new(&address, 0);
-            tree_nodes.push(tree_node);
-        }
-
-        let meta_merkle_tree = MetaMerkleTree::new(tree_nodes).unwrap();
-
-        let root = meta_merkle_tree.merkle_root;
-
-        let ix = admin_update_merkle_tree(
-            &self.ncn_portal_program_id,
-            &whitelist_address,
-            &keypair.pubkey(),
-            root,
-        );
-
-        let blockhash = rpc_client.get_latest_blockhash().await?;
-        let tx = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&keypair.pubkey()),
-            &[keypair],
-            blockhash,
-        );
-        info!("Updating Whitelist transaction: {:?}", tx.get_signature());
-        let result = rpc_client.send_and_confirm_transaction(&tx).await?;
-        info!("Transaction confirmed: {:?}", result);
-        let statuses = rpc_client
-            .get_signature_statuses(&[*tx.get_signature()])
+        let res = reqwest::get(&url)
+            .await?
+            .json::<NcnPortalResponse>()
             .await?;
 
-        let tx_status = statuses
-            .value
-            .first()
-            .unwrap()
-            .as_ref()
-            .ok_or_else(|| anyhow!("No signature status"))?;
-        info!("Transaction status: {:?}", tx_status);
-        // }
+        if res.status {
+            if let Some(addresses) = res.data {
+                let mut tree_nodes = Vec::new();
+                for address in addresses.iter() {
+                    let tree_node = TreeNode::new(address, 0);
+                    tree_nodes.push(tree_node);
+                }
+
+                let meta_merkle_tree = MetaMerkleTree::new(tree_nodes).unwrap();
+
+                let root = meta_merkle_tree.merkle_root;
+
+                let ix = admin_update_merkle_tree(
+                    &self.ncn_portal_program_id,
+                    &whitelist_address,
+                    &keypair.pubkey(),
+                    root,
+                );
+
+                let blockhash = rpc_client.get_latest_blockhash().await?;
+                let tx = Transaction::new_signed_with_payer(
+                    &[ix],
+                    Some(&keypair.pubkey()),
+                    &[keypair],
+                    blockhash,
+                );
+                info!("Updating Whitelist transaction: {:?}", tx.get_signature());
+                let result = rpc_client.send_and_confirm_transaction(&tx).await?;
+                info!("Transaction confirmed: {:?}", result);
+                let statuses = rpc_client
+                    .get_signature_statuses(&[*tx.get_signature()])
+                    .await?;
+
+                let tx_status = statuses
+                    .value
+                    .first()
+                    .unwrap()
+                    .as_ref()
+                    .ok_or_else(|| anyhow!("No signature status"))?;
+                info!("Transaction status: {:?}", tx_status);
+            }
+        } else {
+            info!("Failed to fetch whitelist addresses: {:?}", res.message);
+        }
 
         Ok(())
     }
