@@ -6,7 +6,7 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from './addToWhitelist';
+export * from './adminSetNewAdmin';
 export * from './adminUpdateMerkleRoot';
 export * from './checkWhitelisted';
 export * from './initializeWhitelist';

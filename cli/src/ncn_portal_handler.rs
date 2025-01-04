@@ -2,9 +2,8 @@ use anyhow::{anyhow, Result};
 use jito_bytemuck::AccountDeserialize;
 use log::{debug, info};
 use meta_merkle_tree::{meta_merkle_tree::MetaMerkleTree, tree_node::TreeNode};
-use ncn_portal_client::instructions::RemoveFromWhitelistBuilder;
-use ncn_portal_core::{whitelist::Whitelist, whitelist_entry::WhitelistEntry};
-use ncn_portal_sdk::sdk::{add_to_whitelist, admin_update_merkle_tree, initialize_whitelist};
+use ncn_portal_core::whitelist::Whitelist;
+use ncn_portal_sdk::sdk::{admin_set_new_admin, admin_update_merkle_tree, initialize_whitelist};
 use serde::Deserialize;
 use solana_program::pubkey::Pubkey;
 use solana_rpc_client::{nonblocking::rpc_client::RpcClient, rpc_client::SerializableTransaction};
@@ -51,15 +50,8 @@ impl NcnPortalCliHandler {
                 action: WhitelistActions::AdminUpdateMerkleRoot { url },
             } => self.admin_update_merkle_root(url).await,
             NcnPortalCommands::Whitelist {
-                action:
-                    WhitelistActions::AddToWhitelist {
-                        whitelisted,
-                        rate_limiting,
-                    },
-            } => self.add_to_whitelist(whitelisted, rate_limiting).await,
-            NcnPortalCommands::Whitelist {
-                action: WhitelistActions::RemoveFromWhitelist { whitelisted },
-            } => self.remove_from_whitelist(whitelisted).await,
+                action: WhitelistActions::AdminSetNewAdmin { new_admin },
+            } => self.admin_set_new_admin(new_admin).await,
         }
     }
 
@@ -113,7 +105,7 @@ impl NcnPortalCliHandler {
         Ok(())
     }
 
-    async fn add_to_whitelist(&self, whitelisted: Pubkey, rate_limiting: u64) -> Result<()> {
+    async fn admin_set_new_admin(&self, new_admin: Pubkey) -> Result<()> {
         let keypair = self
             .cli_config
             .keypair
@@ -122,20 +114,12 @@ impl NcnPortalCliHandler {
         let rpc_client = self.get_rpc_client();
 
         let whitelist_address = Whitelist::find_program_address(&self.ncn_portal_program_id).0;
-        let whitelist_entry_address = WhitelistEntry::find_program_address(
-            &self.ncn_portal_program_id,
-            &whitelist_address,
-            &whitelisted,
-        )
-        .0;
 
-        let ix = add_to_whitelist(
+        let ix = admin_set_new_admin(
             &self.ncn_portal_program_id,
             &whitelist_address,
-            &whitelist_entry_address,
-            &whitelisted,
             &keypair.pubkey(),
-            rate_limiting,
+            &new_admin,
         );
 
         let blockhash = rpc_client.get_latest_blockhash().await?;
@@ -145,7 +129,7 @@ impl NcnPortalCliHandler {
             &[keypair],
             blockhash,
         );
-        info!("Adding To Whitelist transaction: {:?}", tx.get_signature());
+        info!("Set new admin: {:?}", tx.get_signature());
         let result = rpc_client.send_and_confirm_transaction(&tx).await?;
         info!("Transaction confirmed: {:?}", result);
         let statuses = rpc_client
@@ -222,58 +206,6 @@ impl NcnPortalCliHandler {
         } else {
             info!("Failed to fetch whitelist addresses: {:?}", res.message);
         }
-
-        Ok(())
-    }
-
-    async fn remove_from_whitelist(&self, whitelisted: Pubkey) -> Result<()> {
-        let keypair = self
-            .cli_config
-            .keypair
-            .as_ref()
-            .ok_or_else(|| anyhow!("No keypair"))?;
-        let rpc_client = self.get_rpc_client();
-
-        let whitelist_address = Whitelist::find_program_address(&self.ncn_portal_program_id).0;
-        let whitelist_entry_address = WhitelistEntry::find_program_address(
-            &self.ncn_portal_program_id,
-            &whitelist_address,
-            &whitelisted,
-        )
-        .0;
-
-        let mut ix_builder = RemoveFromWhitelistBuilder::new();
-        ix_builder
-            .whitelist(whitelist_address)
-            .whitelist_entry(whitelist_entry_address)
-            .whitelisted_info(whitelisted)
-            .admin_info(keypair.pubkey())
-            .instruction();
-
-        let blockhash = rpc_client.get_latest_blockhash().await?;
-        let tx = Transaction::new_signed_with_payer(
-            &[ix_builder.instruction()],
-            Some(&keypair.pubkey()),
-            &[keypair],
-            blockhash,
-        );
-        info!(
-            "Removing from Whitelist transaction: {:?}",
-            tx.get_signature()
-        );
-        let result = rpc_client.send_and_confirm_transaction(&tx).await?;
-        info!("Transaction confirmed: {:?}", result);
-        let statuses = rpc_client
-            .get_signature_statuses(&[*tx.get_signature()])
-            .await?;
-
-        let tx_status = statuses
-            .value
-            .first()
-            .unwrap()
-            .as_ref()
-            .ok_or_else(|| anyhow!("No signature status"))?;
-        info!("Transaction status: {:?}", tx_status);
 
         Ok(())
     }

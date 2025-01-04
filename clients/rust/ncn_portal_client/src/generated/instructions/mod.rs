@@ -5,13 +5,13 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-pub(crate) mod r#add_to_whitelist;
+pub(crate) mod r#admin_set_new_admin;
 pub(crate) mod r#admin_update_merkle_root;
 pub(crate) mod r#check_whitelisted;
 pub(crate) mod r#initialize_whitelist;
 pub(crate) mod r#remove_from_whitelist;
 
-pub use self::r#add_to_whitelist::*;
+pub use self::r#admin_set_new_admin::*;
 pub use self::r#admin_update_merkle_root::*;
 pub use self::r#check_whitelisted::*;
 pub use self::r#initialize_whitelist::*;
