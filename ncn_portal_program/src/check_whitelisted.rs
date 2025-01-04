@@ -23,18 +23,5 @@ pub fn process_check_whitelisted(
 
     whitelist.verify(proof, whitelisted_info.key.to_bytes());
 
-    // WhitelistEntry::load(
-    //     program_id,
-    //     whitelist_info.key,
-    //     whitelisted_info.key,
-    //     whitelist_entry_info,
-    //     false,
-    // )?;
-    // let whitelist_entry_data = whitelist_entry_info.data.borrow();
-    // let whitelist_entry = WhitelistEntry::try_from_slice_unchecked(&whitelist_entry_data)?;
-
-    // whitelist_entry.check_parent(whitelist_info.key)?;
-    // whitelist_entry.check_whitelisted(whitelisted_info.key)?;
-
     Ok(())
 }

@@ -7,7 +7,6 @@ use crate::pubkey_string_conversion;
 pub struct NcnPortalMeta {
     /// Rate Limiting
     rate_limiting: u64,
-
     // #[serde(with = "pubkey_string_conversion")]
     // pub validator_vote_account: Pubkey,
     // #[serde(with = "pubkey_string_conversion")]

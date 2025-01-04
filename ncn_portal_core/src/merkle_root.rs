@@ -6,7 +6,6 @@ use shank::ShankType;
 pub struct MerkleRoot {
     /// The 256-bit merkle root.
     pub root: [u8; 32],
-
     // Maximum number of funds that can ever be claimed from this [MerkleRoot].
     // pub max_total_claim: u64,
 

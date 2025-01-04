@@ -1,34 +1,34 @@
 // use serde::{Deserialize, Serialize};
 // use solana_program::hash::{Hash, Hasher};
 // use solana_sdk::pubkey::Pubkey;
-// 
+//
 // use crate::{error::MerkleRootGeneratorError, pubkey_string_conversion, stake_meta::StakeMeta};
-// 
+//
 // #[derive(Clone, Eq, Debug, Hash, PartialEq, Deserialize, Serialize)]
 // pub struct StakeMetaTreeNode {
 //     /// The stake account entitled to redeem.
 //     #[serde(with = "pubkey_string_conversion")]
 //     pub claimant: Pubkey,
-// 
+//
 //     // Pubkey of the ClaimStatus PDA account, this account should be closed to reclaim rent.
 //     // #[serde(with = "pubkey_string_conversion")]
 //     // pub claim_status_pubkey: Pubkey,
-// 
+//
 //     // Bump of the ClaimStatus PDA account
 //     // pub claim_status_bump: u8,
-// 
+//
 //     // #[serde(with = "pubkey_string_conversion")]
 //     // pub staker_pubkey: Pubkey,
-// 
+//
 //     // #[serde(with = "pubkey_string_conversion")]
 //     // pub withdrawer_pubkey: Pubkey,
-// 
+//
 //     // The amount this account is entitled to.
 //     // pub amount: u64,
 //     /// The proof associated with this TreeNode
 //     pub proof: Option<Vec<[u8; 32]>>,
 // }
-// 
+//
 // impl StakeMetaTreeNode {
 //     pub(crate) fn vec_from_stake_meta(
 //         stake_meta: &StakeMeta,
@@ -56,12 +56,12 @@
 //                 // amount: validator_amount,
 //                 proof: None,
 //             }];
-// 
+//
 //             // let remaining_total_rewards = tip_distribution_meta
 //             //     .total_tips
 //             //     .checked_sub(validator_amount)
 //             //     .unwrap() as u128;
-// 
+//
 //             // let total_delegated = stake_meta.total_delegated as u128;
 //             // tree_nodes.extend(
 //             //     stake_meta
@@ -93,13 +93,13 @@
 //             //         })
 //             //         .collect::<Result<Vec<Self>, MerkleRootGeneratorError>>()?,
 //             // );
-// 
+//
 //             Ok(Some(tree_nodes))
 //         } else {
 //             Ok(None)
 //         }
 //     }
-// 
+//
 //     pub(crate) fn hash(&self) -> Hash {
 //         let mut hasher = Hasher::default();
 //         hasher.hash(self.claimant.as_ref());
