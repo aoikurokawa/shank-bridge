@@ -46,27 +46,21 @@ pub fn admin_update_merkle_tree(
     }
 }
 
-pub fn add_to_whitelist(
+pub fn admin_set_new_admin(
     program_id: &Pubkey,
     whitelist: &Pubkey,
-    whitelist_entry: &Pubkey,
-    whitelisted: &Pubkey,
     admin: &Pubkey,
-    rate_limiting: u64,
+    new_admin: &Pubkey,
 ) -> Instruction {
     let accounts = vec![
-        AccountMeta::new_readonly(*whitelist, false),
-        AccountMeta::new(*whitelist_entry, false),
-        AccountMeta::new_readonly(*whitelisted, false),
+        AccountMeta::new(*whitelist, false),
         AccountMeta::new(*admin, true),
-        AccountMeta::new_readonly(system_program::id(), false),
+        AccountMeta::new_readonly(*new_admin, false),
     ];
     Instruction {
         program_id: *program_id,
         accounts,
-        data: NcnPortalInstruction::AddToWhitelist { rate_limiting }
-            .try_to_vec()
-            .unwrap(),
+        data: NcnPortalInstruction::AdminSetNewAdmin.try_to_vec().unwrap(),
     }
 }
 

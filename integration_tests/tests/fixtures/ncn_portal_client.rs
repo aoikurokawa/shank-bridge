@@ -1,8 +1,6 @@
 use jito_bytemuck::AccountDeserialize;
-use ncn_portal_core::{whitelist::Whitelist, whitelist_entry::WhitelistEntry};
-use ncn_portal_sdk::sdk::{
-    add_to_whitelist, check_whitelisted, initialize_whitelist, remove_from_whitelist,
-};
+use ncn_portal_core::whitelist::Whitelist;
+use ncn_portal_sdk::sdk::{admin_set_new_admin, check_whitelisted, initialize_whitelist};
 use solana_program_test::BanksClient;
 use solana_sdk::{
     commitment_config::CommitmentLevel, native_token::sol_to_lamports, pubkey::Pubkey,
@@ -63,36 +61,16 @@ impl NcnPortalProgramClient {
         .await
     }
 
-    pub async fn get_whitelist_entry(&mut self, account: &Pubkey) -> TestResult<WhitelistEntry> {
-        let account = self.banks_client.get_account(*account).await?.unwrap();
-        Ok(*WhitelistEntry::try_from_slice_unchecked(
-            account.data.as_slice(),
-        )?)
-    }
-
-    pub async fn do_add_to_whitelist(
+    pub async fn do_admin_set_new_admin(
         &mut self,
-        whitelisted: &Pubkey,
         admin: &Keypair,
-        rate_limiting: u64,
+        new_admin: &Pubkey,
     ) -> TestResult<()> {
         let whitelist_pubkey = Whitelist::find_program_address(&ncn_portal_program::id()).0;
-        let whitelist_entry_pubkey = WhitelistEntry::find_program_address(
-            &ncn_portal_program::id(),
-            &whitelist_pubkey,
-            whitelisted,
-        )
-        .0;
 
         self._airdrop(&admin.pubkey(), 1.0).await?;
-        self.add_to_whitelist(
-            &whitelist_pubkey,
-            &whitelist_entry_pubkey,
-            whitelisted,
-            &admin,
-            rate_limiting,
-        )
-        .await?;
+        self.add_to_whitelist(&whitelist_pubkey, &admin, new_admin)
+            .await?;
 
         Ok(())
     }
@@ -100,20 +78,16 @@ impl NcnPortalProgramClient {
     pub async fn add_to_whitelist(
         &mut self,
         whitelist: &Pubkey,
-        whitelist_entry: &Pubkey,
-        whitelisted: &Pubkey,
         admin: &Keypair,
-        rate_limiting: u64,
+        new_admin: &Pubkey,
     ) -> TestResult<()> {
         let blockhash = self.banks_client.get_latest_blockhash().await?;
         self.process_transaction(&Transaction::new_signed_with_payer(
-            &[add_to_whitelist(
+            &[admin_set_new_admin(
                 &ncn_portal_program::id(),
                 whitelist,
-                whitelist_entry,
-                whitelisted,
                 &admin.pubkey(),
-                rate_limiting,
+                new_admin,
             )],
             Some(&admin.pubkey()),
             &[admin],
@@ -153,53 +127,6 @@ impl NcnPortalProgramClient {
             )],
             Some(&whitelisted.pubkey()),
             &[whitelisted],
-            blockhash,
-        ))
-        .await
-    }
-
-    pub async fn do_remove_from_whitelist(
-        &mut self,
-        whitelisted: &Pubkey,
-        admin: &Keypair,
-    ) -> TestResult<()> {
-        let whitelist_pubkey = Whitelist::find_program_address(&ncn_portal_program::id()).0;
-        let whitelist_entry_pubkey = WhitelistEntry::find_program_address(
-            &ncn_portal_program::id(),
-            &whitelist_pubkey,
-            whitelisted,
-        )
-        .0;
-
-        self.remove_from_whitelist(
-            &whitelist_pubkey,
-            &whitelist_entry_pubkey,
-            whitelisted,
-            admin,
-        )
-        .await?;
-
-        Ok(())
-    }
-
-    pub async fn remove_from_whitelist(
-        &mut self,
-        whitelist: &Pubkey,
-        whitelist_entry: &Pubkey,
-        whitelisted: &Pubkey,
-        admin: &Keypair,
-    ) -> TestResult<()> {
-        let blockhash = self.banks_client.get_latest_blockhash().await?;
-        self.process_transaction(&Transaction::new_signed_with_payer(
-            &[remove_from_whitelist(
-                &ncn_portal_program::id(),
-                whitelist,
-                whitelist_entry,
-                whitelisted,
-                &admin.pubkey(),
-            )],
-            Some(&admin.pubkey()),
-            &[admin],
             blockhash,
         ))
         .await

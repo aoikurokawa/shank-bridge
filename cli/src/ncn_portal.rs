@@ -23,11 +23,8 @@ pub enum WhitelistActions {
         #[clap(long)]
         url: String,
     },
-    /// Add to whitelist
-    AddToWhitelist {
-        whitelisted: Pubkey,
-        rate_limiting: u64,
-    },
+    /// Set new admin
+    AdminSetNewAdmin { new_admin: Pubkey },
     /// Remove from whitelist
     RemoveFromWhitelist { whitelisted: Pubkey },
 }

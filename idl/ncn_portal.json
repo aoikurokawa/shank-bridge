@@ -68,40 +68,25 @@
       }
     },
     {
-      "name": "AddToWhitelist",
+      "name": "AdminSetNewAdmin",
       "accounts": [
         {
-          "name": "whitelist",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "whitelistEntry",
+          "name": "whitelistInfo",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "whitelisted",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "admin",
+          "name": "adminInfo",
           "isMut": true,
           "isSigner": true
         },
         {
-          "name": "systemProgram",
+          "name": "newAdminInfo",
           "isMut": false,
           "isSigner": false
         }
       ],
-      "args": [
-        {
-          "name": "rateLimiting",
-          "type": "u64"
-        }
-      ],
+      "args": [],
       "discriminant": {
         "type": "u8",
         "value": 2

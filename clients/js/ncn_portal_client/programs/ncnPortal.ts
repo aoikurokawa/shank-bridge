@@ -13,7 +13,7 @@ import {
   type ReadonlyUint8Array,
 } from '@solana/web3.js';
 import {
-  type ParsedAddToWhitelistInstruction,
+  type ParsedAdminSetNewAdminInstruction,
   type ParsedAdminUpdateMerkleRootInstruction,
   type ParsedCheckWhitelistedInstruction,
   type ParsedInitializeWhitelistInstruction,
@@ -31,7 +31,7 @@ export enum NcnPortalAccount {
 export enum NcnPortalInstruction {
   InitializeWhitelist,
   AdminUpdateMerkleRoot,
-  AddToWhitelist,
+  AdminSetNewAdmin,
   CheckWhitelisted,
   RemoveFromWhitelist,
 }
@@ -47,7 +47,7 @@ export function identifyNcnPortalInstruction(
     return NcnPortalInstruction.AdminUpdateMerkleRoot;
   }
   if (containsBytes(data, getU8Encoder().encode(2), 0)) {
-    return NcnPortalInstruction.AddToWhitelist;
+    return NcnPortalInstruction.AdminSetNewAdmin;
   }
   if (containsBytes(data, getU8Encoder().encode(3), 0)) {
     return NcnPortalInstruction.CheckWhitelisted;
@@ -70,8 +70,8 @@ export type ParsedNcnPortalInstruction<
       instructionType: NcnPortalInstruction.AdminUpdateMerkleRoot;
     } & ParsedAdminUpdateMerkleRootInstruction<TProgram>)
   | ({
-      instructionType: NcnPortalInstruction.AddToWhitelist;
-    } & ParsedAddToWhitelistInstruction<TProgram>)
+      instructionType: NcnPortalInstruction.AdminSetNewAdmin;
+    } & ParsedAdminSetNewAdminInstruction<TProgram>)
   | ({
       instructionType: NcnPortalInstruction.CheckWhitelisted;
     } & ParsedCheckWhitelistedInstruction<TProgram>)

@@ -1,10 +1,10 @@
-mod add_to_whitelist;
+mod admin_set_new_admin;
 mod admin_update_merkle_root;
 mod check_whitelisted;
 mod initialize_whitelist;
 mod remove_from_whitelist;
 
-use add_to_whitelist::process_add_to_whitelist;
+use admin_set_new_admin::process_admin_set_new_admin;
 use admin_update_merkle_root::process_admin_update_merkle_root;
 use borsh::BorshDeserialize;
 use check_whitelisted::process_check_whitelisted;
@@ -42,9 +42,9 @@ pub fn process_instruction(
             msg!("Instruction: AdminUpdateMerkleRoot");
             process_admin_update_merkle_root(program_id, accounts, root)
         }
-        NcnPortalInstruction::AddToWhitelist { rate_limiting } => {
-            msg!("Instruction: AddToWhitelist");
-            process_add_to_whitelist(program_id, accounts, rate_limiting)
+        NcnPortalInstruction::AdminSetNewAdmin => {
+            msg!("Instruction: AdminSetNewAdmin");
+            process_admin_set_new_admin(program_id, accounts)
         }
         NcnPortalInstruction::CheckWhitelisted { proof } => {
             msg!("Instruction: CheckWhitelisted");
