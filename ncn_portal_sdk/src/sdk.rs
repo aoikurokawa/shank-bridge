@@ -73,13 +73,11 @@ pub fn add_to_whitelist(
 pub fn check_whitelisted(
     program_id: &Pubkey,
     whitelist: &Pubkey,
-    whitelist_entry: &Pubkey,
     whitelisted: &Pubkey,
     proof: Vec<[u8; 32]>,
 ) -> Instruction {
     let accounts = vec![
         AccountMeta::new_readonly(*whitelist, false),
-        AccountMeta::new_readonly(*whitelist_entry, false),
         AccountMeta::new_readonly(*whitelisted, true),
     ];
     Instruction {

@@ -12,8 +12,6 @@ use borsh::BorshSerialize;
 pub struct CheckWhitelisted {
     pub whitelist: solana_program::pubkey::Pubkey,
 
-    pub whitelist_entry: solana_program::pubkey::Pubkey,
-
     pub whitelisted: solana_program::pubkey::Pubkey,
 }
 
@@ -30,13 +28,9 @@ impl CheckWhitelisted {
         args: CheckWhitelistedInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.whitelist,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.whitelist_entry,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -84,12 +78,10 @@ pub struct CheckWhitelistedInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[]` whitelist
-///   1. `[]` whitelist_entry
-///   2. `[signer]` whitelisted
+///   1. `[signer]` whitelisted
 #[derive(Clone, Debug, Default)]
 pub struct CheckWhitelistedBuilder {
     whitelist: Option<solana_program::pubkey::Pubkey>,
-    whitelist_entry: Option<solana_program::pubkey::Pubkey>,
     whitelisted: Option<solana_program::pubkey::Pubkey>,
     proof: Option<Vec<[u8; 32]>>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -102,14 +94,6 @@ impl CheckWhitelistedBuilder {
     #[inline(always)]
     pub fn whitelist(&mut self, whitelist: solana_program::pubkey::Pubkey) -> &mut Self {
         self.whitelist = Some(whitelist);
-        self
-    }
-    #[inline(always)]
-    pub fn whitelist_entry(
-        &mut self,
-        whitelist_entry: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.whitelist_entry = Some(whitelist_entry);
         self
     }
     #[inline(always)]
@@ -144,7 +128,6 @@ impl CheckWhitelistedBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = CheckWhitelisted {
             whitelist: self.whitelist.expect("whitelist is not set"),
-            whitelist_entry: self.whitelist_entry.expect("whitelist_entry is not set"),
             whitelisted: self.whitelisted.expect("whitelisted is not set"),
         };
         let args = CheckWhitelistedInstructionArgs {
@@ -159,8 +142,6 @@ impl CheckWhitelistedBuilder {
 pub struct CheckWhitelistedCpiAccounts<'a, 'b> {
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub whitelist_entry: &'b solana_program::account_info::AccountInfo<'a>,
-
     pub whitelisted: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
@@ -170,8 +151,6 @@ pub struct CheckWhitelistedCpi<'a, 'b> {
     pub __program: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelist: &'b solana_program::account_info::AccountInfo<'a>,
-
-    pub whitelist_entry: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub whitelisted: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
@@ -187,7 +166,6 @@ impl<'a, 'b> CheckWhitelistedCpi<'a, 'b> {
         Self {
             __program: program,
             whitelist: accounts.whitelist,
-            whitelist_entry: accounts.whitelist_entry,
             whitelisted: accounts.whitelisted,
             __args: args,
         }
@@ -225,13 +203,9 @@ impl<'a, 'b> CheckWhitelistedCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(3 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(2 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             *self.whitelist.key,
-            false,
-        ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.whitelist_entry.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -254,10 +228,9 @@ impl<'a, 'b> CheckWhitelistedCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(4 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(3 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.whitelist.clone());
-        account_infos.push(self.whitelist_entry.clone());
         account_infos.push(self.whitelisted.clone());
         remaining_accounts
             .iter()
@@ -276,8 +249,7 @@ impl<'a, 'b> CheckWhitelistedCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[]` whitelist
-///   1. `[]` whitelist_entry
-///   2. `[signer]` whitelisted
+///   1. `[signer]` whitelisted
 #[derive(Clone, Debug)]
 pub struct CheckWhitelistedCpiBuilder<'a, 'b> {
     instruction: Box<CheckWhitelistedCpiBuilderInstruction<'a, 'b>>,
@@ -288,7 +260,6 @@ impl<'a, 'b> CheckWhitelistedCpiBuilder<'a, 'b> {
         let instruction = Box::new(CheckWhitelistedCpiBuilderInstruction {
             __program: program,
             whitelist: None,
-            whitelist_entry: None,
             whitelisted: None,
             proof: None,
             __remaining_accounts: Vec::new(),
@@ -301,14 +272,6 @@ impl<'a, 'b> CheckWhitelistedCpiBuilder<'a, 'b> {
         whitelist: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.whitelist = Some(whitelist);
-        self
-    }
-    #[inline(always)]
-    pub fn whitelist_entry(
-        &mut self,
-        whitelist_entry: &'b solana_program::account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.whitelist_entry = Some(whitelist_entry);
         self
     }
     #[inline(always)]
@@ -373,11 +336,6 @@ impl<'a, 'b> CheckWhitelistedCpiBuilder<'a, 'b> {
 
             whitelist: self.instruction.whitelist.expect("whitelist is not set"),
 
-            whitelist_entry: self
-                .instruction
-                .whitelist_entry
-                .expect("whitelist_entry is not set"),
-
             whitelisted: self
                 .instruction
                 .whitelisted
@@ -395,7 +353,6 @@ impl<'a, 'b> CheckWhitelistedCpiBuilder<'a, 'b> {
 struct CheckWhitelistedCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     whitelist: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    whitelist_entry: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     whitelisted: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     proof: Option<Vec<[u8; 32]>>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

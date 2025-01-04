@@ -1,9 +1,11 @@
 use anyhow::{anyhow, Result};
 use jito_bytemuck::AccountDeserialize;
 use log::{debug, info};
+use meta_merkle_tree::{meta_merkle_tree::MetaMerkleTree, tree_node::TreeNode};
 use ncn_portal_client::instructions::RemoveFromWhitelistBuilder;
 use ncn_portal_core::{whitelist::Whitelist, whitelist_entry::WhitelistEntry};
 use ncn_portal_sdk::sdk::{add_to_whitelist, admin_update_merkle_tree, initialize_whitelist};
+use serde::Deserialize;
 use solana_program::pubkey::Pubkey;
 use solana_rpc_client::{nonblocking::rpc_client::RpcClient, rpc_client::SerializableTransaction};
 use solana_sdk::{signature::Signer, transaction::Transaction};
@@ -12,6 +14,13 @@ use crate::{
     ncn_portal::{NcnPortalCommands, WhitelistActions},
     CliConfig,
 };
+
+#[derive(Debug, Deserialize)]
+struct NcnPortalResponse {
+    status: bool,
+    data: Option<Vec<Pubkey>>,
+    message: String,
+}
 
 pub struct NcnPortalCliHandler {
     cli_config: CliConfig,
@@ -39,8 +48,8 @@ impl NcnPortalCliHandler {
                 action: WhitelistActions::Get,
             } => self.get_whitelist().await,
             NcnPortalCommands::Whitelist {
-                action: WhitelistActions::AdminUpdateMerkleRoot { root },
-            } => self.admint_update_merkle_root(root).await,
+                action: WhitelistActions::AdminUpdateMerkleRoot { url },
+            } => self.admin_update_merkle_root(url).await,
             NcnPortalCommands::Whitelist {
                 action:
                     WhitelistActions::AddToWhitelist {
@@ -154,7 +163,7 @@ impl NcnPortalCliHandler {
         Ok(())
     }
 
-    async fn admint_update_merkle_root(&self, merkle_root: Vec<u8>) -> Result<()> {
+    async fn admin_update_merkle_root(&self, url: String) -> Result<()> {
         let keypair = self
             .cli_config
             .keypair
@@ -164,38 +173,55 @@ impl NcnPortalCliHandler {
 
         let whitelist_address = Whitelist::find_program_address(&self.ncn_portal_program_id).0;
 
-        let mut root = [0u8; 32];
-        let len = merkle_root.len().min(32);
-        root[..len].copy_from_slice(&merkle_root[..len]);
-
-        let ix = admin_update_merkle_tree(
-            &self.ncn_portal_program_id,
-            &whitelist_address,
-            &keypair.pubkey(),
-            root,
-        );
-
-        let blockhash = rpc_client.get_latest_blockhash().await?;
-        let tx = Transaction::new_signed_with_payer(
-            &[ix],
-            Some(&keypair.pubkey()),
-            &[keypair],
-            blockhash,
-        );
-        info!("Updating Whitelist transaction: {:?}", tx.get_signature());
-        let result = rpc_client.send_and_confirm_transaction(&tx).await?;
-        info!("Transaction confirmed: {:?}", result);
-        let statuses = rpc_client
-            .get_signature_statuses(&[*tx.get_signature()])
+        let res = reqwest::get(&url)
+            .await?
+            .json::<NcnPortalResponse>()
             .await?;
 
-        let tx_status = statuses
-            .value
-            .first()
-            .unwrap()
-            .as_ref()
-            .ok_or_else(|| anyhow!("No signature status"))?;
-        info!("Transaction status: {:?}", tx_status);
+        if res.status {
+            if let Some(addresses) = res.data {
+                let mut tree_nodes = Vec::new();
+                for address in addresses.iter() {
+                    let tree_node = TreeNode::new(address, 0);
+                    tree_nodes.push(tree_node);
+                }
+
+                let meta_merkle_tree = MetaMerkleTree::new(tree_nodes).unwrap();
+
+                let root = meta_merkle_tree.merkle_root;
+
+                let ix = admin_update_merkle_tree(
+                    &self.ncn_portal_program_id,
+                    &whitelist_address,
+                    &keypair.pubkey(),
+                    root,
+                );
+
+                let blockhash = rpc_client.get_latest_blockhash().await?;
+                let tx = Transaction::new_signed_with_payer(
+                    &[ix],
+                    Some(&keypair.pubkey()),
+                    &[keypair],
+                    blockhash,
+                );
+                info!("Updating Whitelist transaction: {:?}", tx.get_signature());
+                let result = rpc_client.send_and_confirm_transaction(&tx).await?;
+                info!("Transaction confirmed: {:?}", result);
+                let statuses = rpc_client
+                    .get_signature_statuses(&[*tx.get_signature()])
+                    .await?;
+
+                let tx_status = statuses
+                    .value
+                    .first()
+                    .unwrap()
+                    .as_ref()
+                    .ok_or_else(|| anyhow!("No signature status"))?;
+                info!("Transaction status: {:?}", tx_status);
+            }
+        } else {
+            info!("Failed to fetch whitelist addresses: {:?}", res.message);
+        }
 
         Ok(())
     }

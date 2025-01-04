@@ -116,11 +116,6 @@
           "isSigner": false
         },
         {
-          "name": "whitelistEntry",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
           "name": "whitelisted",
           "isMut": false,
           "isSigner": true
@@ -275,6 +270,6 @@
   ],
   "metadata": {
     "origin": "shank",
-    "address": "DwyMNTQ5aSduQhx3Pjra9kXeySxjD5YUkC1bDXmvEPFZ"
+    "address": "DXWJEC5JBUeNurpo7wPDUHGhDWnjkTzUiV3gp2D9y8zr"
   }
 }

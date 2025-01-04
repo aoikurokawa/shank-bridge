@@ -19,7 +19,10 @@ pub enum WhitelistActions {
     /// Get the whitelist
     Get,
     /// Update Merkle Root
-    AdminUpdateMerkleRoot { root: Vec<u8> },
+    AdminUpdateMerkleRoot {
+        #[clap(long)]
+        url: String,
+    },
     /// Add to whitelist
     AddToWhitelist {
         whitelisted: Pubkey,

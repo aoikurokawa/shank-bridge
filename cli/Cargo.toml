@@ -13,9 +13,12 @@ clap-markdown = { workspace = true }
 env_logger = { workspace = true }
 jito-bytemuck = { workspace = true }
 log = { workspace = true }
+meta-merkle-tree = { workspace = true }
 ncn-portal-client = { workspace = true }
 ncn-portal-core = { workspace = true }
 ncn-portal-sdk = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
 solana-account-decoder = { workspace = true }
 solana-cli-config = { workspace = true }
 solana-program = { workspace = true }

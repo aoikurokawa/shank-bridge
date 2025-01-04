@@ -24,8 +24,7 @@ pub enum NcnPortalInstruction {
 
     /// Check Whitelist
     #[account(0, name = "whitelist")]
-    #[account(1, name = "whitelist_entry")]
-    #[account(2, signer, name = "whitelisted")]
+    #[account(1, signer, name = "whitelisted")]
     CheckWhitelisted { proof: Vec<[u8; 32]> },
 
     /// Removed from Whitelist
