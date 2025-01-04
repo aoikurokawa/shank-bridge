@@ -12,12 +12,6 @@ use solana_sdk::{
 
 use super::ncn_portal_client::NcnPortalProgramClient;
 
-// use crate::fixtures::{
-//     restaking_client::{OperatorRoot, RestakingProgramClient},
-//     vault_client::{VaultProgramClient, VaultRoot},
-//     TestResult,
-// };
-
 pub struct TestBuilder {
     pub context: ProgramTestContext,
 }

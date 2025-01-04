@@ -82,26 +82,3 @@ pub fn check_whitelisted(
             .unwrap(),
     }
 }
-
-pub fn remove_from_whitelist(
-    program_id: &Pubkey,
-    whitelist: &Pubkey,
-    whitelist_entry: &Pubkey,
-    whitelisted: &Pubkey,
-    admin: &Pubkey,
-) -> Instruction {
-    let accounts = vec![
-        AccountMeta::new_readonly(*whitelist, false),
-        AccountMeta::new(*whitelist_entry, false),
-        AccountMeta::new_readonly(*whitelisted, false),
-        AccountMeta::new(*admin, true),
-        AccountMeta::new_readonly(system_program::id(), false),
-    ];
-    Instruction {
-        program_id: *program_id,
-        accounts,
-        data: NcnPortalInstruction::RemoveFromWhitelist
-            .try_to_vec()
-            .unwrap(),
-    }
-}

@@ -2,7 +2,6 @@ mod admin_set_new_admin;
 mod admin_update_merkle_root;
 mod check_whitelisted;
 mod initialize_whitelist;
-mod remove_from_whitelist;
 
 use admin_set_new_admin::process_admin_set_new_admin;
 use admin_update_merkle_root::process_admin_update_merkle_root;
@@ -11,7 +10,6 @@ use check_whitelisted::process_check_whitelisted;
 use const_str_to_pubkey::str_to_pubkey;
 use initialize_whitelist::process_initialize_whitelist;
 use ncn_portal_sdk::instruction::NcnPortalInstruction;
-use remove_from_whitelist::process_remove_from_whitelist;
 use solana_program::{
     account_info::AccountInfo, declare_id, entrypoint::ProgramResult, msg,
     program_error::ProgramError, pubkey::Pubkey,
@@ -49,10 +47,6 @@ pub fn process_instruction(
         NcnPortalInstruction::CheckWhitelisted { proof } => {
             msg!("Instruction: CheckWhitelisted");
             process_check_whitelisted(program_id, accounts, proof)
-        }
-        NcnPortalInstruction::RemoveFromWhitelist => {
-            msg!("Instruction: RemoveFromWhitelist");
-            process_remove_from_whitelist(program_id, accounts)
         }
     }
 }

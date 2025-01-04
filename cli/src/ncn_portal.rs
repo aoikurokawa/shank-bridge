@@ -25,6 +25,4 @@ pub enum WhitelistActions {
     },
     /// Set new admin
     AdminSetNewAdmin { new_admin: Pubkey },
-    /// Remove from whitelist
-    RemoveFromWhitelist { whitelisted: Pubkey },
 }

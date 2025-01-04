@@ -35,6 +35,5 @@ cargo r -p cli ncn-portal whitelist add-to-whitelist "DyEKpfGg6sBL2Dg6rnHcsdAHJd
 ```
 
 ## Resources
-- https://rig.rs/index.html
 - https://docs.anthropic.com/en/home
 
