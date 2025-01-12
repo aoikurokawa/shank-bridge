@@ -2,6 +2,11 @@
 
 ## Whitelist Program
 
+| Network | Program    | Address                                      | Version |
+| ------- | ---------- | -------------------------------------------- | ------- |
+| Testnet | NCN Portal | DXWJEC5JBUeNurpo7wPDUHGhDWnjkTzUiV3gp2D9y8zr | 0.1.0   |
+| Devnet  | NCN Portal | DXWJEC5JBUeNurpo7wPDUHGhDWnjkTzUiV3gp2D9y8zr | 0.1.0   |
+
 ### Test
 
 ```bash
@@ -33,7 +38,4 @@ cargo r -p cli ncn-portal whitelist initialize --keypair "KEYPAIR" --rpc-url "ht
 ```bash
 cargo r -p cli ncn-portal whitelist add-to-whitelist "DyEKpfGg6sBL2Dg6rnHcsdAHJdCoe7Ur5VWzDzdHkQY6" 100 --keypair "KEYPAIR" --rpc-url "https://api.devnet.solana.com" --ncn-portal-program-id "DwyMNTQ5aSduQhx3Pjra9kXeySxjD5YUkC1bDXmvEPFZ"
 ```
-
-## Resources
-- https://docs.anthropic.com/en/home
 
