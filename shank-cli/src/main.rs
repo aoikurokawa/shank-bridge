@@ -20,10 +20,6 @@ fn main() -> Result<()> {
         .get("NCN_PORTAL_PROGRAM_ID")
         .ok_or_else(|| anyhow!("NCN_PORTAL_PROGRAM_ID not found"))?
         .to_string();
-    // let vault_program_id = envs
-    //     .get("VAULT_PROGRAM_ID")
-    //     .ok_or_else(|| anyhow!("VAULT_PROGRAM_ID not found"))?
-    //     .to_string();
 
     let idl_configs = vec![IdlConfiguration {
         program_id: ncn_portal_program_id,
