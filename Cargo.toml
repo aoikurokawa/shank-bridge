@@ -1,13 +1,6 @@
 [workspace]
 members = [
-	"cli", 
-	"clients/rust/ncn_portal_client",
-	"integration_tests",
-	"meta_merkle_tree",
-	"ncn_portal_core",
-	"ncn_portal_program",
-	"ncn_portal_sdk",
-	"shank-cli",
+	"shank-idl-generator",
 ]
 resolver = "2"
 
