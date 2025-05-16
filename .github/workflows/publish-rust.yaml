@@ -33,7 +33,7 @@ on:
 jobs:
   publish:
     name: Publish Crates
-    runs-on: ubuntu-latests
+    runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
