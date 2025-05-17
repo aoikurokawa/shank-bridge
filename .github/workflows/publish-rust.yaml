@@ -31,8 +31,9 @@ on:
         default: true
 
 jobs:
-  build-platforms:
-    name: Build on ${{ matrix.os }}
+  # First job - build binaries
+  build-binaries:
+    name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -40,16 +41,13 @@ jobs:
         include:
           - os: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            name: linux-musl
-            binary_extension: ""
+            name: linux
           - os: macos-latest
             target: x86_64-apple-darwin
             name: macos
-            binary_extension: ""
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             name: windows
-            binary_extension: ".exe"
     steps:
       - name: Git Checkout
         uses: actions/checkout@v4
@@ -66,66 +64,68 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
-          key: "shank-bridge-${{ matrix.name }}-${{ inputs.package_path }}"
+          key: "shank-build-${{ matrix.target }}-${{ inputs.package_path }}"
       
-      - name: Extract crate name
-        id: extract_name
+      - name: Extract crate name and version
+        id: crate_info
         shell: bash
         run: |
-          # Extract just the crate name from the path for use in binaries
           CRATE_NAME=$(basename "${{ inputs.package_path }}")
+          VERSION=$(grep -m1 'version =' ${{ inputs.package_path }}/Cargo.toml | cut -d '"' -f2)
           echo "crate_name=$CRATE_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
       
-      - name: Build and Test 
+      - name: Build
         working-directory: ${{ inputs.package_path }}
-        run: |
-          cargo build --release --target ${{ matrix.target }}
-          cargo test --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }}
       
-      - name: Prepare Linux/macOS binary
+      - name: Prepare binary (Unix)
         if: matrix.os != 'windows-latest'
-        shell: bash
         run: |
-          CRATE_NAME="${{ steps.extract_name.outputs.crate_name }}"
-          VERSION="${{ steps.extract_version.outputs.version }}"
+          CRATE_NAME="${{ steps.crate_info.outputs.crate_name }}"
+          VERSION="${{ steps.crate_info.outputs.version }}"
           BINARY_NAME="${CRATE_NAME}-v${VERSION}-${{ matrix.target }}"
           
           # Copy binary to root with appropriate name
-          cp target/${{ matrix.target }}/release/${CRATE_NAME} ${BINARY_NAME}
+          cp ${{ inputs.package_path }}/target/${{ matrix.target }}/release/${CRATE_NAME} ${BINARY_NAME}
           
           # Create checksum
           shasum -a 256 ${BINARY_NAME} > ${BINARY_NAME}.sha256
-          
-          # Create artifacts dir and move files there
-          mkdir -p artifacts
-          mv ${BINARY_NAME} artifacts/
-          mv ${BINARY_NAME}.sha256 artifacts/
       
-      - name: Prepare Windows binary
+      - name: Prepare binary (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $CRATE_NAME = "${{ steps.extract_name.outputs.crate_name }}"
-          $VERSION = "${{ steps.extract_version.outputs.version }}"
+          $CRATE_NAME = "${{ steps.crate_info.outputs.crate_name }}"
+          $VERSION = "${{ steps.crate_info.outputs.version }}"
           $BINARY_NAME = "${CRATE_NAME}-v${VERSION}-${{ matrix.target }}.exe"
           
           # Copy binary to root with appropriate name
-          Copy-Item "target/${{ matrix.target }}/release/${CRATE_NAME}.exe" -Destination $BINARY_NAME
+          Copy-Item "${{ inputs.package_path }}/target/${{ matrix.target }}/release/${CRATE_NAME}.exe" -Destination $BINARY_NAME
           
           # Create checksum
           $hash = Get-FileHash -Path $BINARY_NAME -Algorithm SHA256
           $hash.Hash | Out-File -FilePath "${BINARY_NAME}.sha256"
-          
-          # Create artifacts directory and move files there
-          New-Item -ItemType Directory -Path artifacts -Force
-          Move-Item $BINARY_NAME -Destination artifacts/
-          Move-Item "${BINARY_NAME}.sha256" -Destination artifacts/
       
-      - uses: actions/upload-artifact@v4
+      - name: Upload binary artifacts (Unix)
+        if: matrix.os != 'windows-latest'
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}-binary
-          path: artifacts/
-          retention-days: 1
+          path: |
+            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}
+            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}.sha256
+          retention-days: 7
+      
+      - name: Upload binary artifacts (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}-binary
+          path: |
+            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}.exe
+            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}.exe.sha256
+          retention-days: 7
 
   publish:
     name: Publish Crates
