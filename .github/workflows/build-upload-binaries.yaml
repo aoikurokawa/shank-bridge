@@ -54,6 +54,16 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           key: "shank-build-${{ matrix.target }}-${{ inputs.package_path }}"
+
+      - name: Extract crate name and version
+        id: crate_info
+        shell: bash
+        run: |
+          CRATE_NAME=$(basename "${{ inputs.package_path }}")
+          VERSION=$(grep -m1 'version =' ${{ inputs.package_path }}/Cargo.toml | cut -d '"' -f2)
+          echo "crate_name=$CRATE_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building $CRATE_NAME version $VERSION for ${{ matrix.target }}"
       
       - name: Build
         working-directory: ${{ inputs.package_path }}
@@ -62,8 +72,8 @@ jobs:
       - name: Prepare binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
-          CRATE_NAME="${{ needs.update-version.outputs.crate_name }}"
-          VERSION="${{ needs.update-version.outputs.new_version }}"
+          CRATE_NAME="${{ steps.crate_info.outputs.crate_name }}"
+          VERSION="${{ steps.crate_info.outputs.version }}"
           BINARY_NAME="${CRATE_NAME}-v${VERSION}-${{ matrix.target }}"
           
           echo "Building binary with new version: $VERSION"
@@ -78,8 +88,8 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $CRATE_NAME = "${{ needs.update-version.outputs.crate_name }}"
-          $VERSION = "${{ needs.update-version.outputs.new_version }}"
+          $CRATE_NAME = "${{ steps.crate_info.outputs.crate_name }}"
+          $VERSION = "${{ steps.crate_info.outputs.version }}"
           $BINARY_NAME = "${CRATE_NAME}-v${VERSION}-${{ matrix.target }}.exe"
           
           Write-Host "Building binary with new version: $VERSION"
@@ -97,8 +107,8 @@ jobs:
         with:
           name: ${{ matrix.name }}
           path: |
-            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}
-            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}.sha256
+            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}
+            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}.sha256
           retention-days: 7
       
       - name: Upload binary artifacts (Windows)
@@ -107,8 +117,8 @@ jobs:
         with:
           name: ${{ matrix.name }}
           path: |
-            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}.exe
-            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}.exe.sha256
+            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}.exe
+            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}.exe.sha256
           retention-days: 7
 
   publish-release:
