@@ -208,6 +208,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: release-artifacts
+          merge-multiple: true
 
       - name: Generate a changelog
         if: github.event.inputs.create_release == 'true'
@@ -224,4 +225,4 @@ jobs:
           tag: ${{ steps.publish.outputs.new_git_tag }}
           name: "${{ steps.extract_name.outputs.crate_name }} v${{ steps.publish.outputs.new_version }}"
           body: ${{ steps.changelog.outputs.changelog }}
-          artifacts: "release-artifacts/**/*"
+          artifacts: "./release-artifacts/*"
