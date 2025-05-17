@@ -238,4 +238,4 @@ jobs:
           tag: ${{ steps.publish.outputs.new_git_tag }}
           name: "${{ steps.extract_name.outputs.crate_name }} v${{ steps.publish.outputs.new_version }}"
           body: ${{ steps.changelog.outputs.changelog }}
-          artifacts: "./release-artifacts/*"
+          artifacts: "./release-binaries/*"
