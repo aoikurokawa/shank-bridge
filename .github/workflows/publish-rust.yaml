@@ -31,120 +31,15 @@ on:
         default: true
 
 jobs:
-  # First job - build binaries
-  build-binaries:
-    name: Build ${{ matrix.target }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            name: x86_64-unknown-linux-musl
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            name: x86_64-apple-darwin
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            name: x86_64-pc-windows-msvc
-    steps:
-      - name: Git Checkout
-        uses: actions/checkout@v4
-      
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-      
-      - name: Install musl-tools (Linux only)
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
-      
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          key: "shank-build-${{ matrix.target }}-${{ inputs.package_path }}"
-      
-      - name: Extract crate name and version
-        id: crate_info
-        shell: bash
-        run: |
-          CRATE_NAME=$(basename "${{ inputs.package_path }}")
-          VERSION=$(grep -m1 'version =' ${{ inputs.package_path }}/Cargo.toml | cut -d '"' -f2)
-          echo "crate_name=$CRATE_NAME" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-      
-      - name: Build
-        working-directory: ${{ inputs.package_path }}
-        run: cargo build --release --target ${{ matrix.target }}
-      
-      # Debug step - Let's check where the binary actually is
-      - name: Debug binary location (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          echo "Finding binary in target directory:"
-          find . -name "${{ steps.crate_info.outputs.crate_name }}" -type f | grep "target"
-      
-      - name: Debug binary location (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          Write-Host "Finding binary in target directory:"
-          Get-ChildItem -Path . -Include "${{ steps.crate_info.outputs.crate_name }}.exe" -File -Recurse | Where-Object { $_.FullName -match "target" }
-      
-      - name: Prepare binary (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          CRATE_NAME="${{ steps.crate_info.outputs.crate_name }}"
-          VERSION="${{ steps.crate_info.outputs.version }}"
-          BINARY_NAME="${CRATE_NAME}-v${VERSION}-${{ matrix.target }}"
-          
-          # Copy binary to root with appropriate name
-          cp ./target/${{ matrix.target }}/release/${CRATE_NAME} ${BINARY_NAME}
-          
-          # Create checksum
-          shasum -a 256 ${BINARY_NAME} > ${BINARY_NAME}.sha256
-      
-      - name: Prepare binary (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          $CRATE_NAME = "${{ steps.crate_info.outputs.crate_name }}"
-          $VERSION = "${{ steps.crate_info.outputs.version }}"
-          $BINARY_NAME = "${CRATE_NAME}-v${VERSION}-${{ matrix.target }}.exe"
-          
-          # Copy binary to root with appropriate name
-          Copy-Item "./target/${{ matrix.target }}/release/${CRATE_NAME}.exe" -Destination $BINARY_NAME
-          
-          # Create checksum
-          $hash = Get-FileHash -Path $BINARY_NAME -Algorithm SHA256
-          $hash.Hash | Out-File -FilePath "${BINARY_NAME}.sha256"
-      
-      - name: Upload binary artifacts (Unix)
-        if: matrix.os != 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.name }}
-          path: |
-            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}
-            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}.sha256
-          retention-days: 7
-      
-      - name: Upload binary artifacts (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.name }}
-          path: |
-            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}.exe
-            ${{ steps.crate_info.outputs.crate_name }}-v${{ steps.crate_info.outputs.version }}-${{ matrix.target }}.exe.sha256
-          retention-days: 7
-
-  publish:
-    name: Publish Crates
-    needs: build-binaries
+  # First job - update version and publish crate
+  update-version:
+    name: Update Version
     runs-on: ubuntu-latest
+    outputs:
+      crate_name: ${{ steps.publish.outputs.crate_name }}
+      old_version: ${{ steps.publish.outputs.old_version }}
+      new_version: ${{ steps.publish.outputs.new_version }}
+      new_git_tag: ${{ steps.publish.outputs.new_git_tag }}
     permissions:
       contents: write
     steps:
@@ -160,7 +55,7 @@ jobs:
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
         with:
-          key: "shank-bridge-publish-${{ inputs.package_path }}"
+          key: "shank-publish-${{ inputs.package_path }}"
 
       - name: Install Cargo Release
         run: cargo install cargo-release
@@ -177,7 +72,7 @@ jobs:
           CRATE_NAME=$(basename "${{ inputs.package_path }}")
           echo "crate_name=$CRATE_NAME" >> $GITHUB_OUTPUT
 
-      - name: Publish Crate
+      - name: Update Version and Publish Crate
         id: publish
         working-directory: ${{ inputs.package_path }}
         env:
@@ -185,6 +80,7 @@ jobs:
         run: |
           # Get current version before update
           OLD_VERSION=$(grep -m1 'version =' Cargo.toml | cut -d '"' -f2)
+          echo "old_version=${OLD_VERSION}" >> $GITHUB_OUTPUT
           
           if [ "${{ inputs.dry_run }}" == "true" ]; then
             # For dry-run mode, don't use the -x flag (dry-run is default)
@@ -198,33 +94,151 @@ jobs:
           NEW_VERSION=$(grep -m1 'version =' Cargo.toml | cut -d '"' -f2)
           
           # Set outputs for the release step
-          echo "old_version=${OLD_VERSION}" >> $GITHUB_OUTPUT
+          echo "crate_name=${{ steps.extract_name.outputs.crate_name }}" >> $GITHUB_OUTPUT
           echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
           echo "new_git_tag=${{ steps.extract_name.outputs.crate_name }}-v${NEW_VERSION}" >> $GITHUB_OUTPUT
+          
+          # Echo the versions for debug
+          echo "Old version: ${OLD_VERSION}, New version: ${NEW_VERSION}"
+
+  # Second job - build binaries with new version
+  build-binaries:
+    name: Build ${{ matrix.target }}
+    needs: update-version
+    runs-on: ${{ matrix.os }}
+    if: github.event.inputs.create_release == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            name: x86_64-unknown-linux-musl
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            name: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            name: x86_64-pc-windows-msvc
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.update-version.outputs.new_git_tag }}
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Install musl-tools (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: "shank-build-${{ matrix.target }}-${{ inputs.package_path }}"
+      
+      - name: Build
+        working-directory: ${{ inputs.package_path }}
+        run: cargo build --release --target ${{ matrix.target }}
+      
+      - name: Prepare binary (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          CRATE_NAME="${{ needs.update-version.outputs.crate_name }}"
+          VERSION="${{ needs.update-version.outputs.new_version }}"
+          BINARY_NAME="${CRATE_NAME}-v${VERSION}-${{ matrix.target }}"
+          
+          echo "Building binary with new version: $VERSION"
+          
+          # Copy binary to root with appropriate name
+          cp ./target/${{ matrix.target }}/release/${CRATE_NAME} ${BINARY_NAME}
+          
+          # Create checksum
+          shasum -a 256 ${BINARY_NAME} > ${BINARY_NAME}.sha256
+      
+      - name: Prepare binary (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $CRATE_NAME = "${{ needs.update-version.outputs.crate_name }}"
+          $VERSION = "${{ needs.update-version.outputs.new_version }}"
+          $BINARY_NAME = "${CRATE_NAME}-v${VERSION}-${{ matrix.target }}.exe"
+          
+          Write-Host "Building binary with new version: $VERSION"
+          
+          # Copy binary to root with appropriate name
+          Copy-Item "./target/${{ matrix.target }}/release/${CRATE_NAME}.exe" -Destination $BINARY_NAME
+          
+          # Create checksum
+          $hash = Get-FileHash -Path $BINARY_NAME -Algorithm SHA256
+          $hash.Hash | Out-File -FilePath "${BINARY_NAME}.sha256"
+      
+      - name: Upload binary artifacts (Unix)
+        if: matrix.os != 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}
+            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}.sha256
+          retention-days: 7
+      
+      - name: Upload binary artifacts (Windows)
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}.exe
+            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}.exe.sha256
+          retention-days: 7
+
+  # Third job - Create GitHub release
+  create-release:
+    name: Create GitHub Release
+    needs: [update-version, build-binaries]
+    runs-on: ubuntu-latest
+    if: github.event.inputs.create_release == 'true' && github.event.inputs.dry_run != 'true'
+    permissions:
+      contents: write
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.REPO_PAT }}
+          fetch-depth: 0 # get the whole history for changelog
+          ref: ${{ needs.update-version.outputs.new_git_tag }}
+
+      - name: Create release directory
+        run: mkdir -p release-binaries
 
       - name: Download Linux binary
-        if: github.event.inputs.create_release == 'true' && github.event.inputs.dry_run != 'true'
         uses: actions/download-artifact@v4
         with:
           name: x86_64-unknown-linux-musl
           path: release-binaries
 
       - name: Download macOS binary
-        if: github.event.inputs.create_release == 'true' && github.event.inputs.dry_run != 'true'
         uses: actions/download-artifact@v4
         with:
           name: x86_64-apple-darwin
           path: release-binaries
 
       - name: Download Windows binary
-        if: github.event.inputs.create_release == 'true' && github.event.inputs.dry_run != 'true'
         uses: actions/download-artifact@v4
         with:
           name: x86_64-pc-windows-msvc
           path: release-binaries
 
+      - name: List release files
+        run: |
+          echo "Contents of release-binaries directory:"
+          ls -la release-binaries/
+
       - name: Generate a changelog
-        if: github.event.inputs.create_release == 'true'
         id: changelog
         uses: metcalfc/changelog-generator@v4.1.0
         with:
@@ -232,10 +246,10 @@ jobs:
           includePattern: ".*/${{ inputs.package_path }}/.*"
 
       - name: Create GitHub release
-        if: github.event.inputs.create_release == 'true' && github.event.inputs.dry_run != 'true'
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ steps.publish.outputs.new_git_tag }}
-          name: "${{ steps.extract_name.outputs.crate_name }} v${{ steps.publish.outputs.new_version }}"
+          tag: ${{ needs.update-version.outputs.new_git_tag }}
+          name: "${{ needs.update-version.outputs.crate_name }} v${{ needs.update-version.outputs.new_version }}"
           body: ${{ steps.changelog.outputs.changelog }}
           artifacts: "./release-binaries/*"
+          artifactErrorsFailBuild: false
