@@ -1,4 +1,4 @@
-name: Publish Shank IDL Generator Crates
+name: Publish Shank IDL Generator
 
 on:
   workflow_dispatch:
@@ -143,6 +143,7 @@ jobs:
 
   publish:
     name: Publish Crates
+    needs: build-binaries
     runs-on: ubuntu-latest
     permissions:
       contents: write
