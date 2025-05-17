@@ -31,6 +31,95 @@ on:
         default: true
 
 jobs:
+  build-platforms:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            name: linux-musl
+            binary_extension: ""
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            name: macos
+            binary_extension: ""
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            name: windows
+            binary_extension: ".exe"
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      
+      - name: Install musl-tools (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+      
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: "shank-bridge-${{ matrix.name }}-${{ inputs.package_path }}"
+      
+      - name: Extract crate name
+        id: extract_name
+        shell: bash
+        run: |
+          # Extract just the crate name from the path for use in binaries
+          CRATE_NAME=$(basename "${{ inputs.package_path }}")
+          echo "crate_name=$CRATE_NAME" >> $GITHUB_OUTPUT
+      
+      - name: Build and Test 
+        working-directory: ${{ inputs.package_path }}
+        run: |
+          cargo build --release --target ${{ matrix.target }}
+          cargo test --target ${{ matrix.target }}
+      
+      - name: Prepare binary
+        id: prepare_binary
+        shell: bash
+        run: |
+          CRATE_NAME="${{ steps.extract_name.outputs.crate_name }}"
+          VERSION=$(grep -m1 'version =' ${{ inputs.package_path }}/Cargo.toml | cut -d '"' -f2)
+          BINARY_NAME="${CRATE_NAME}-v${VERSION}-${{ matrix.target }}${{ matrix.binary_extension }}"
+          
+          # Copy binary to root with appropriate name
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            cp target/${{ matrix.target }}/release/${CRATE_NAME}${{ matrix.binary_extension }} ${BINARY_NAME}
+          else 
+            cp target/${{ matrix.target }}/release/${CRATE_NAME} ${BINARY_NAME}
+          fi
+          
+          # Create checksum
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            certutil -hashfile ${BINARY_NAME} SHA256 > ${BINARY_NAME}.sha256
+            # Clean up certutil output to just get the hash
+            cat ${BINARY_NAME}.sha256 | find /v "hash" | find /v "CertUtil" > temp.sha256
+            mv temp.sha256 ${BINARY_NAME}.sha256
+          else
+            shasum -a 256 ${BINARY_NAME} > ${BINARY_NAME}.sha256
+          fi
+          
+          echo "binary_name=${BINARY_NAME}" >> $GITHUB_OUTPUT
+          echo "binary_path=${BINARY_NAME}" >> $GITHUB_OUTPUT
+          echo "checksum_path=${BINARY_NAME}.sha256" >> $GITHUB_OUTPUT
+      
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare_binary.outputs.binary_name }}
+          path: |
+            ${{ steps.prepare_binary.outputs.binary_path }}
+            ${{ steps.prepare_binary.outputs.checksum_path }}
+          retention-days: 1
+
   publish:
     name: Publish Crates
     runs-on: ubuntu-latest
@@ -91,6 +180,12 @@ jobs:
           echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
           echo "new_git_tag=${{ steps.extract_name.outputs.crate_name }}-v${NEW_VERSION}" >> $GITHUB_OUTPUT
 
+      - name: Download all artifacts
+        if: github.event.inputs.create_release == 'true' && github.event.inputs.dry_run != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
       - name: Generate a changelog
         if: github.event.inputs.create_release == 'true'
         id: changelog
@@ -106,3 +201,4 @@ jobs:
           tag: ${{ steps.publish.outputs.new_git_tag }}
           name: "${{ steps.extract_name.outputs.crate_name }} v${{ steps.publish.outputs.new_version }}"
           body: ${{ steps.changelog.outputs.changelog }}
+          artifacts: "release-artifacts/**/*"
