@@ -1,4 +1,4 @@
-name: Publish Shank IDL Generator
+name: Publish Shank IDL Generator Crate
 
 on:
   workflow_dispatch:
@@ -31,9 +31,9 @@ on:
         default: true
 
 jobs:
-  # First job - update version and publish crate
-  update-version:
-    name: Update Version
+  # Update version and publish crate
+  publish-crate:
+    name: Update Version and Publish
     runs-on: ubuntu-latest
     outputs:
       crate_name: ${{ steps.publish.outputs.crate_name }}
@@ -101,105 +101,10 @@ jobs:
           # Echo the versions for debug
           echo "Old version: ${OLD_VERSION}, New version: ${NEW_VERSION}"
 
-  # Second job - build binaries with new version
-  build-binaries:
-    name: Build ${{ matrix.target }}
-    needs: update-version
-    runs-on: ${{ matrix.os }}
-    if: github.event.inputs.create_release == 'true'
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
-            name: x86_64-unknown-linux-musl
-          - os: macos-latest
-            target: x86_64-apple-darwin
-            name: x86_64-apple-darwin
-          - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            name: x86_64-pc-windows-msvc
-    steps:
-      - name: Git Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.update-version.outputs.new_git_tag }}
-      
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: ${{ matrix.target }}
-      
-      - name: Install musl-tools (Linux only)
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
-      
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2
-        with:
-          key: "shank-build-${{ matrix.target }}-${{ inputs.package_path }}"
-      
-      - name: Build
-        working-directory: ${{ inputs.package_path }}
-        run: cargo build --release --target ${{ matrix.target }}
-      
-      - name: Prepare binary (Unix)
-        if: matrix.os != 'windows-latest'
-        run: |
-          CRATE_NAME="${{ needs.update-version.outputs.crate_name }}"
-          VERSION="${{ needs.update-version.outputs.new_version }}"
-          BINARY_NAME="${CRATE_NAME}-v${VERSION}-${{ matrix.target }}"
-          
-          echo "Building binary with new version: $VERSION"
-          
-          # Copy binary to root with appropriate name
-          cp ./target/${{ matrix.target }}/release/${CRATE_NAME} ${BINARY_NAME}
-          
-          # Create checksum
-          shasum -a 256 ${BINARY_NAME} > ${BINARY_NAME}.sha256
-      
-      - name: Prepare binary (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          $CRATE_NAME = "${{ needs.update-version.outputs.crate_name }}"
-          $VERSION = "${{ needs.update-version.outputs.new_version }}"
-          $BINARY_NAME = "${CRATE_NAME}-v${VERSION}-${{ matrix.target }}.exe"
-          
-          Write-Host "Building binary with new version: $VERSION"
-          
-          # Copy binary to root with appropriate name
-          Copy-Item "./target/${{ matrix.target }}/release/${CRATE_NAME}.exe" -Destination $BINARY_NAME
-          
-          # Create checksum
-          $hash = Get-FileHash -Path $BINARY_NAME -Algorithm SHA256
-          $hash.Hash | Out-File -FilePath "${BINARY_NAME}.sha256"
-      
-      - name: Upload binary artifacts (Unix)
-        if: matrix.os != 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.name }}
-          path: |
-            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}
-            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}.sha256
-          retention-days: 7
-      
-      - name: Upload binary artifacts (Windows)
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.name }}
-          path: |
-            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}.exe
-            ${{ needs.update-version.outputs.crate_name }}-v${{ needs.update-version.outputs.new_version }}-${{ matrix.target }}.exe.sha256
-          retention-days: 7
-
-  # Third job - Create GitHub release
+  # Create GitHub release (without binaries)
   create-release:
     name: Create GitHub Release
-    needs: [update-version, build-binaries]
+    needs: publish-crate
     runs-on: ubuntu-latest
     if: github.event.inputs.create_release == 'true' && github.event.inputs.dry_run != 'true'
     permissions:
@@ -210,33 +115,7 @@ jobs:
         with:
           token: ${{ secrets.REPO_PAT }}
           fetch-depth: 0 # get the whole history for changelog
-          ref: ${{ needs.update-version.outputs.new_git_tag }}
-
-      - name: Create release directory
-        run: mkdir -p release-binaries
-
-      - name: Download Linux binary
-        uses: actions/download-artifact@v4
-        with:
-          name: x86_64-unknown-linux-musl
-          path: release-binaries
-
-      - name: Download macOS binary
-        uses: actions/download-artifact@v4
-        with:
-          name: x86_64-apple-darwin
-          path: release-binaries
-
-      - name: Download Windows binary
-        uses: actions/download-artifact@v4
-        with:
-          name: x86_64-pc-windows-msvc
-          path: release-binaries
-
-      - name: List release files
-        run: |
-          echo "Contents of release-binaries directory:"
-          ls -la release-binaries/
+          ref: ${{ needs.publish-crate.outputs.new_git_tag }}
 
       - name: Generate a changelog
         id: changelog
@@ -248,8 +127,13 @@ jobs:
       - name: Create GitHub release
         uses: ncipollo/release-action@v1
         with:
-          tag: ${{ needs.update-version.outputs.new_git_tag }}
-          name: "${{ needs.update-version.outputs.crate_name }} v${{ needs.update-version.outputs.new_version }}"
+          tag: ${{ needs.publish-crate.outputs.new_git_tag }}
+          name: "${{ needs.publish-crate.outputs.crate_name }} v${{ needs.publish-crate.outputs.new_version }}"
           body: ${{ steps.changelog.outputs.changelog }}
-          artifacts: "./release-binaries/*"
-          artifactErrorsFailBuild: false
+          draft: true
+
+      - name: Echo release information
+        run: |
+          echo "Created draft release for ${{ needs.publish-crate.outputs.crate_name }} v${{ needs.publish-crate.outputs.new_version }}"
+          echo "Tag: ${{ needs.publish-crate.outputs.new_git_tag }}"
+          echo "To build and upload binaries, run the 'Build and Upload Binaries' workflow and specify this tag."
