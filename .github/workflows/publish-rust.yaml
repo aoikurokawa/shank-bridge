@@ -79,6 +79,20 @@ jobs:
         working-directory: ${{ inputs.package_path }}
         run: cargo build --release --target ${{ matrix.target }}
       
+      # Debug step - Let's check where the binary actually is
+      - name: Debug binary location (Unix)
+        if: matrix.os != 'windows-latest'
+        run: |
+          echo "Finding binary in target directory:"
+          find . -name "${{ steps.crate_info.outputs.crate_name }}" -type f | grep "target"
+      
+      - name: Debug binary location (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          Write-Host "Finding binary in target directory:"
+          Get-ChildItem -Path . -Include "${{ steps.crate_info.outputs.crate_name }}.exe" -File -Recurse | Where-Object { $_.FullName -match "target" }
+      
       - name: Prepare binary (Unix)
         if: matrix.os != 'windows-latest'
         run: |
@@ -87,7 +101,7 @@ jobs:
           BINARY_NAME="${CRATE_NAME}-v${VERSION}-${{ matrix.target }}"
           
           # Copy binary to root with appropriate name
-          cp ${{ inputs.package_path }}/target/${{ matrix.target }}/release/${CRATE_NAME} ${BINARY_NAME}
+          cp ./target/${{ matrix.target }}/release/${CRATE_NAME} ${BINARY_NAME}
           
           # Create checksum
           shasum -a 256 ${BINARY_NAME} > ${BINARY_NAME}.sha256
@@ -101,7 +115,7 @@ jobs:
           $BINARY_NAME = "${CRATE_NAME}-v${VERSION}-${{ matrix.target }}.exe"
           
           # Copy binary to root with appropriate name
-          Copy-Item "${{ inputs.package_path }}/target/${{ matrix.target }}/release/${CRATE_NAME}.exe" -Destination $BINARY_NAME
+          Copy-Item "./target/${{ matrix.target }}/release/${CRATE_NAME}.exe" -Destination $BINARY_NAME
           
           # Create checksum
           $hash = Get-FileHash -Path $BINARY_NAME -Algorithm SHA256
