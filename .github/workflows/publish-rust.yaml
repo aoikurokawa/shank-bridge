@@ -126,7 +126,6 @@ jobs:
           name: ${{ matrix.name }}-binary
           path: artifacts/
           retention-days: 1
-          retention-days: 1
 
   publish:
     name: Publish Crates
