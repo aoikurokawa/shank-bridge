@@ -84,11 +84,10 @@ jobs:
       
       - name: Prepare Linux/macOS binary
         if: matrix.os != 'windows-latest'
-        id: prepare_unix_binary
         shell: bash
         run: |
           CRATE_NAME="${{ steps.extract_name.outputs.crate_name }}"
-          VERSION=$(grep -m1 'version =' ${{ inputs.package_path }}/Cargo.toml | cut -d '"' -f2)
+          VERSION="${{ steps.extract_version.outputs.version }}"
           BINARY_NAME="${CRATE_NAME}-v${VERSION}-${{ matrix.target }}"
           
           # Copy binary to root with appropriate name
@@ -97,18 +96,17 @@ jobs:
           # Create checksum
           shasum -a 256 ${BINARY_NAME} > ${BINARY_NAME}.sha256
           
-          echo "binary_name=${BINARY_NAME}" >> $GITHUB_OUTPUT
-          echo "binary_path=${BINARY_NAME}" >> $GITHUB_OUTPUT
-          echo "checksum_path=${BINARY_NAME}.sha256" >> $GITHUB_OUTPUT
+          # Create artifacts dir and move files there
+          mkdir -p artifacts
+          mv ${BINARY_NAME} artifacts/
+          mv ${BINARY_NAME}.sha256 artifacts/
       
       - name: Prepare Windows binary
         if: matrix.os == 'windows-latest'
-        id: prepare_windows_binary
         shell: pwsh
         run: |
           $CRATE_NAME = "${{ steps.extract_name.outputs.crate_name }}"
-          # PowerShell syntax to extract version
-          $VERSION = (Get-Content ${{ inputs.package_path }}/Cargo.toml | Select-String -Pattern 'version = "(.+)"' | ForEach-Object { $_.Matches.Groups[1].Value } | Select-Object -First 1)
+          $VERSION = "${{ steps.extract_version.outputs.version }}"
           $BINARY_NAME = "${CRATE_NAME}-v${VERSION}-${{ matrix.target }}.exe"
           
           # Copy binary to root with appropriate name
@@ -118,29 +116,16 @@ jobs:
           $hash = Get-FileHash -Path $BINARY_NAME -Algorithm SHA256
           $hash.Hash | Out-File -FilePath "${BINARY_NAME}.sha256"
           
-          # Set outputs
-          "binary_name=${BINARY_NAME}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "binary_path=${BINARY_NAME}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "checksum_path=${BINARY_NAME}.sha256" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          # Create artifacts directory and move files there
+          New-Item -ItemType Directory -Path artifacts -Force
+          Move-Item $BINARY_NAME -Destination artifacts/
+          Move-Item "${BINARY_NAME}.sha256" -Destination artifacts/
       
-      - name: Upload Linux/macOS binary artifact
-        if: matrix.os != 'windows-latest'
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.prepare_unix_binary.outputs.binary_name }}
-          path: |
-            ${{ steps.prepare_unix_binary.outputs.binary_path }}
-            ${{ steps.prepare_unix_binary.outputs.checksum_path }}
+          name: ${{ matrix.name }}-binary
+          path: artifacts/
           retention-days: 1
-      
-      - name: Upload Windows binary artifact
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.prepare_windows_binary.outputs.binary_name }}
-          path: |
-            ${{ steps.prepare_windows_binary.outputs.binary_path }}
-            ${{ steps.prepare_windows_binary.outputs.checksum_path }}
           retention-days: 1
 
   publish:
@@ -203,12 +188,26 @@ jobs:
           echo "new_version=${NEW_VERSION}" >> $GITHUB_OUTPUT
           echo "new_git_tag=${{ steps.extract_name.outputs.crate_name }}-v${NEW_VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Download all artifacts
+      - name: Download Linux binary
         if: github.event.inputs.create_release == 'true' && github.event.inputs.dry_run != 'true'
         uses: actions/download-artifact@v4
         with:
-          path: release-artifacts
-          merge-multiple: true
+          name: linux-musl-binary
+          path: release-binaries
+
+      - name: Download macOS binary
+        if: github.event.inputs.create_release == 'true' && github.event.inputs.dry_run != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: macos-binary
+          path: release-binaries
+
+      - name: Download Windows binary
+        if: github.event.inputs.create_release == 'true' && github.event.inputs.dry_run != 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-binary
+          path: release-binaries
 
       - name: Generate a changelog
         if: github.event.inputs.create_release == 'true'
