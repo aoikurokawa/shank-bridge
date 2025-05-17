@@ -39,7 +39,8 @@ jobs:
       - name: Git Checkout
         uses: actions/checkout@v4
         with:
-          ref: ${{ needs.update-version.outputs.new_git_tag }}
+          fetch-depth: 1
+          ref: refs/tags/${{ github.event.inputs.release_tag }}
       
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
