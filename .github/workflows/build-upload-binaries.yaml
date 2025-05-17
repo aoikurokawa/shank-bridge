@@ -22,7 +22,6 @@ jobs:
   build-binaries:
     name: Build ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
-    if: github.event.inputs.create_release == 'true'
     strategy:
       fail-fast: false
       matrix:
