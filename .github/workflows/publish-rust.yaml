@@ -82,42 +82,65 @@ jobs:
           cargo build --release --target ${{ matrix.target }}
           cargo test --target ${{ matrix.target }}
       
-      - name: Prepare binary
-        id: prepare_binary
+      - name: Prepare Linux/macOS binary
+        if: matrix.os != 'windows-latest'
+        id: prepare_unix_binary
         shell: bash
         run: |
           CRATE_NAME="${{ steps.extract_name.outputs.crate_name }}"
           VERSION=$(grep -m1 'version =' ${{ inputs.package_path }}/Cargo.toml | cut -d '"' -f2)
-          BINARY_NAME="${CRATE_NAME}-v${VERSION}-${{ matrix.target }}${{ matrix.binary_extension }}"
+          BINARY_NAME="${CRATE_NAME}-v${VERSION}-${{ matrix.target }}"
           
           # Copy binary to root with appropriate name
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            cp target/${{ matrix.target }}/release/${CRATE_NAME}${{ matrix.binary_extension }} ${BINARY_NAME}
-          else 
-            cp target/${{ matrix.target }}/release/${CRATE_NAME} ${BINARY_NAME}
-          fi
+          cp target/${{ matrix.target }}/release/${CRATE_NAME} ${BINARY_NAME}
           
           # Create checksum
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            certutil -hashfile ${BINARY_NAME} SHA256 > ${BINARY_NAME}.sha256
-            # Clean up certutil output to just get the hash
-            cat ${BINARY_NAME}.sha256 | find /v "hash" | find /v "CertUtil" > temp.sha256
-            mv temp.sha256 ${BINARY_NAME}.sha256
-          else
-            shasum -a 256 ${BINARY_NAME} > ${BINARY_NAME}.sha256
-          fi
+          shasum -a 256 ${BINARY_NAME} > ${BINARY_NAME}.sha256
           
           echo "binary_name=${BINARY_NAME}" >> $GITHUB_OUTPUT
           echo "binary_path=${BINARY_NAME}" >> $GITHUB_OUTPUT
           echo "checksum_path=${BINARY_NAME}.sha256" >> $GITHUB_OUTPUT
       
-      - name: Upload binary artifact
+      - name: Prepare Windows binary
+        if: matrix.os == 'windows-latest'
+        id: prepare_windows_binary
+        shell: pwsh
+        run: |
+          $CRATE_NAME = "${{ steps.extract_name.outputs.crate_name }}"
+          # PowerShell syntax to extract version
+          $VERSION = (Get-Content ${{ inputs.package_path }}/Cargo.toml | Select-String -Pattern 'version = "(.+)"' | ForEach-Object { $_.Matches.Groups[1].Value } | Select-Object -First 1)
+          $BINARY_NAME = "${CRATE_NAME}-v${VERSION}-${{ matrix.target }}.exe"
+          
+          # Copy binary to root with appropriate name
+          Copy-Item "target/${{ matrix.target }}/release/${CRATE_NAME}.exe" -Destination $BINARY_NAME
+          
+          # Create checksum
+          $hash = Get-FileHash -Path $BINARY_NAME -Algorithm SHA256
+          $hash.Hash | Out-File -FilePath "${BINARY_NAME}.sha256"
+          
+          # Set outputs
+          "binary_name=${BINARY_NAME}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "binary_path=${BINARY_NAME}" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "checksum_path=${BINARY_NAME}.sha256" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+      
+      - name: Upload Linux/macOS binary artifact
+        if: matrix.os != 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ steps.prepare_binary.outputs.binary_name }}
+          name: ${{ steps.prepare_unix_binary.outputs.binary_name }}
           path: |
-            ${{ steps.prepare_binary.outputs.binary_path }}
-            ${{ steps.prepare_binary.outputs.checksum_path }}
+            ${{ steps.prepare_unix_binary.outputs.binary_path }}
+            ${{ steps.prepare_unix_binary.outputs.checksum_path }}
+          retention-days: 1
+      
+      - name: Upload Windows binary artifact
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare_windows_binary.outputs.binary_name }}
+          path: |
+            ${{ steps.prepare_windows_binary.outputs.binary_path }}
+            ${{ steps.prepare_windows_binary.outputs.checksum_path }}
           retention-days: 1
 
   publish:
